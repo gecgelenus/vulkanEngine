@@ -18,6 +18,9 @@
 #include <fstream>
 
 
+
+
+
 struct UniformBufferObject {
     glm::mat4 model;
     glm::mat4 view;
@@ -59,7 +62,8 @@ private:
 
     void mainLoop() {
 
-
+        glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
+        
         while (!glfwWindowShouldClose(window)) {
             drawFrame();
             glfwPollEvents();
@@ -126,7 +130,20 @@ private:
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "MyEngine", nullptr, nullptr);
+        glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+        // position
+        position = glm::vec3(5, 5, 5);
+        // horizontal angle : toward -Z
+        horizontalAngle = 3.14f;
+        // vertical angle : 0, look at the horizon
+        verticalAngle = 0.0f;
+        
+
+        speed = 3.0f; // 3 units / second
+        mouseSpeed = 7.0f;
+        
     }
 
     void initVulkan() {
@@ -207,6 +224,7 @@ private:
 
     }
 
+
     //VULKAN INITIALIZATION
 
     void createInstance() {
@@ -243,7 +261,7 @@ private:
             throw std::runtime_error("failed to create window surface!");
         }
     }
-
+    
     void pickPhysicalDevice() {
 
         uint32_t deviceCount = 0;
@@ -894,22 +912,73 @@ private:
         }
     }
 
-
+   
 
     // HELPERS
 
     void updateUniformBuffer(uint32_t currentImage) {
-        static auto startTime = std::chrono::high_resolution_clock::now();
 
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
+        float currentTime = glfwGetTime();
+        float deltaTime = float(currentTime - lastTime);
+        lastTime = currentTime;
+
+        double xpos, ypos;
+
+        glfwGetCursorPos(window, &xpos, &ypos);
+
+        glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
+
+        horizontalAngle += mouseSpeed * deltaTime * float(WIDTH / 2 - xpos);
+        verticalAngle += mouseSpeed * deltaTime * float(HEIGHT / 2 - ypos);
+
+        // Direction : Spherical coordinates to Cartesian coordinates conversion
+        glm::vec3 direction(
+            cos(verticalAngle) * sin(horizontalAngle),
+            sin(verticalAngle),
+            cos(verticalAngle) * cos(horizontalAngle)
+        );
+
+        // Right vector
+        glm::vec3 right = glm::vec3(
+            sin(horizontalAngle - 3.14f / 2.0f),
+            0,
+            cos(horizontalAngle - 3.14f / 2.0f)
+        );
+
+        glm::vec3 up = glm::cross(right, direction);
+
+
+        // Move forward
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            position += direction * deltaTime * speed;
+        }
+        // Move backward
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            position -= direction * deltaTime * speed;
+        }
+        // Strafe right
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            position += right * deltaTime * speed;
+        }
+        // Strafe left
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            position -= right * deltaTime * speed;
+        }
+        // Terminate program
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(window, true);
+        }
+
+        std::cout << position.x << " " << position.y << " " << position.z << std::endl;
+
+       
         UniformBufferObject ubo{};
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.model = glm::mat4(1.0f);
 
-        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = glm::lookAt(position, position + direction, up);
 
-        ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+        ubo.proj = glm::perspective(glm::radians(45.0f), WIDTH / (float)HEIGHT, 0.1f, 100.0f);
 
         ubo.proj[1][1] *= -1;
 
@@ -1118,8 +1187,8 @@ private:
     }
 
     // WINDOW 
-    const uint32_t WIDTH = 800;
-    const uint32_t HEIGHT = 600;
+    uint32_t WIDTH = 800;
+    uint32_t HEIGHT = 600;
 
     GLFWwindow* window;
 
@@ -1162,6 +1231,9 @@ private:
     std::vector<VkFence> inFlightFences;
     uint32_t currentFrame = 0;
 
+
+    float lastTime;
+
     // DATA
 
     VkBuffer vertexBuffer;
@@ -1181,7 +1253,18 @@ private:
     VkDescriptorSetLayout descriptorSetLayout;
     std::vector<VkDescriptorSet> descriptorSets;
 
+    // CAMERA
 
+    glm::vec3 position;
+    float horizontalAngle;
+    float verticalAngle;
+
+    float lastX;
+    float lastY;
+    bool firstMouse;
+
+    float speed;
+    float mouseSpeed;
     // CONSTANTS 
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -1214,7 +1297,7 @@ private:
 
 int main() {
     MainClass app;
-
+    
     try {
         app.run();
     }
