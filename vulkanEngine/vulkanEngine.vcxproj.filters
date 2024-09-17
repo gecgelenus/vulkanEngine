@@ -23,4 +23,9 @@
     <None Include="shader.vert" />
     <None Include="shader.frag" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="vulkan_mem_alloc.h">
+      <Filter>Üst Bilgi Dosyaları</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
