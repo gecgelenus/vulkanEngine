@@ -142,6 +142,8 @@
     <None Include="shader.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Renderer.hpp" />
+    <ClInclude Include="tiny_obj_loader.h" />
     <ClInclude Include="vulkan_mem_alloc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
