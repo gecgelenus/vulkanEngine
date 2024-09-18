@@ -135,6 +135,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Object.hpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="vulkanEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -144,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="tiny_obj_loader.h" />
+    <ClInclude Include="Util.hpp" />
     <ClInclude Include="vulkan_mem_alloc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
