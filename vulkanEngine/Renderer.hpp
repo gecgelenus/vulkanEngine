@@ -2,6 +2,11 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+
+
+
+
+
 #include <vector>
 #include <stdexcept>
 
@@ -33,10 +38,27 @@ public:
 	Renderer();
 	~Renderer();
 
-	void createObjectPropertyBuffer();
-
+	
 	void drawFrame();
 	void addObject(Object*);
+	void deleteObject(std::string& name);
+
+	Object* getObject(std::string& name);
+
+
+	void readOBJ(std::string& path);
+
+	void createVertexBuffer();
+	void createIndexBuffer();
+	void createUniformBuffers();
+
+
+
+	void createDescriptorPool();
+	void createDescriptorSetLayout();
+	void allocateDescriptorSets();
+	void createTextureSampler();
+
 	void updateUniformBuffer(uint32_t targetFrame);
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t index);
 	void createSyncObjects();
@@ -53,6 +75,7 @@ public:
 
 	GLFWwindow* window;
 	VkSwapchainKHR swapChain;
+	VkSurfaceKHR surface;
 
 	VkPipeline graphicsPipeline;
 	VkPipelineLayout pipelineLayout;
@@ -68,7 +91,6 @@ public:
 
 	VkExtent2D swapChainExtent;
 
-	std::vector<VkDescriptorSet> descriptorSets;
 
 	std::vector<Vertex> vertices;
 
@@ -84,6 +106,16 @@ public:
 
 
 	VkRenderPass renderPass;
+	VkSampler textureSampler;
+
+	VkImageView textureImageView;
+	VkImageView bunnyImageView;
+
+	
+
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSetLayout descriptorSetLayout;
+	std::vector<VkDescriptorSet> descriptorSets;
 
 	uint32_t WIDTH = 800;
 	uint32_t HEIGHT = 600;
@@ -91,11 +123,16 @@ public:
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
+	UniformBufferObject ubo;
 
 private:
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+	void resetBuffers();
+
+
 	std::vector<Object*> objects;
 
 	const int MAX_FRAMES_IN_FLIGHT = 3;

@@ -4,8 +4,6 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tiny_obj_loader.h"
 
 #include <vulkan/vulkan.h>
 #define GLM_FORCE_RADIANS
@@ -24,89 +22,17 @@
 #include "Renderer.hpp"
 
 
+
 class MainClass {
 public:
 	void run() {
 		
 
-		std::string inputfile = "bunnyCube.obj";
-		tinyobj::ObjReaderConfig reader_config;
-		reader_config.mtl_search_path = "./"; // Path to material files
-
-		tinyobj::ObjReader reader;
-
-		if (!reader.ParseFromFile(inputfile, reader_config)) {
-			if (!reader.Error().empty()) {
-				std::cerr << "TinyObjReader: " << reader.Error();
-			}
-			exit(1);
-		}
-
-		if (!reader.Warning().empty()) {
-			std::cout << "TinyObjReader: " << reader.Warning();
-		}
-
-		auto& attrib = reader.GetAttrib();
-		auto& shapes = reader.GetShapes();
-		auto& materials = reader.GetMaterials();
-
-	
-
-
-		// Loop over shapes
-		for (size_t s = 0; s < shapes.size(); s++) {
-			// Loop over faces(polygon)
-			size_t index_offset = 0;
-			for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-				size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
-
-				// Loop over vertices in the face.
-				for (size_t v = 0; v < fv; v++) {
-					Vertex tmpVertex{};
-
-					// access to vertex
-					tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-					tmpVertex.pos.x = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
-					tmpVertex.pos.y = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
-					tmpVertex.pos.z = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
-
-					// Check if `normal_index` is zero or positive. negative = no normal data
-					if (idx.normal_index >= 0) {
-						tmpVertex.normal.x = attrib.normals[3 * size_t(idx.normal_index) + 0];
-						tmpVertex.normal.y = attrib.normals[3 * size_t(idx.normal_index) + 1];
-						tmpVertex.normal.z = attrib.normals[3 * size_t(idx.normal_index) + 2];
-					}
-
-					// Check if `texcoord_index` is zero or positive. negative = no texcoord data
-					if (idx.texcoord_index >= 0) {
-						tmpVertex.texCoord.x = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
-						tmpVertex.texCoord.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
-					}
-
-					// Optional: vertex colors
-					// tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
-					// tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
-					// tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
-
-					vertices.push_back(tmpVertex);
-
-
-					// Store the vertex index in the index buffer
-					indices.push_back(static_cast<uint32_t>(indices.size()));
-
-				}
-				index_offset += fv;
-
-				// per-face material
-				shapes[s].mesh.material_ids[f];
-			}
-		}
 
 		initWindow();
 		initVulkan();
 
 		mainLoop();
-		cleanup();
 	}
 
 private:
@@ -128,113 +54,38 @@ private:
 		renderer.commandBuffers = commandBuffers;
 		renderer.window = window;
 		renderer.swapChain = swapChain;
+		renderer.swapChainFramebuffers = swapChainFramebuffers;
+		renderer.swapChainExtent = swapChainExtent;
+		renderer.surface = surface;
+
+
+		renderer.renderPass = renderPass;
+		renderer.textureImageView = textureImageView;
+		renderer.bunnyImageView = bunnyImageView;
+
+
+		renderer.createDescriptorPool();
+		renderer.createDescriptorSetLayout();
+		renderer.allocateDescriptorSets();
+		renderer.createTextureSampler();
+		
+		descriptorSetLayout = renderer.descriptorSetLayout;
+		createGraphicsPipeline();
+
 		renderer.graphicsPipeline = graphicsPipeline;
 		renderer.pipelineLayout = pipelineLayout;
-		renderer.swapChainFramebuffers = swapChainFramebuffers;
-		renderer.vertexBuffer = vertexBuffer;
-		renderer.vertexBufferMemory = vertexBufferMemory;
-		renderer.indexBuffer = indexBuffer;
-		renderer.indexBufferMemory = indexBufferMemory;
-		renderer.swapChainExtent = swapChainExtent;
-		renderer.descriptorSets = descriptorSets;
-		renderer.vertices = vertices;
-		renderer.indices = indices;
-		renderer.uniformBuffers = uniformBuffers;
-		renderer.uniformBuffersMemory = uniformBuffersMemory;
-		renderer.uniformBuffersMapped = uniformBuffersMapped;
-		renderer.renderPass = renderPass;
-		renderer.createObjectPropertyBuffer();
+		
+		renderer.createVertexBuffer();
+		renderer.createIndexBuffer();
+		renderer.createUniformBuffers();
 
 
+		std::string path = "monkeys.obj";
+		
 
-		std::string inputfile = "bunnyCube.obj";
-		tinyobj::ObjReaderConfig reader_config;
-		reader_config.mtl_search_path = "./"; // Path to material files
+		renderer.readOBJ(path);
+		
 
-		tinyobj::ObjReader reader;
-
-		if (!reader.ParseFromFile(inputfile, reader_config)) {
-			if (!reader.Error().empty()) {
-				std::cerr << "TinyObjReader: " << reader.Error();
-			}
-			exit(1);
-		}
-
-		if (!reader.Warning().empty()) {
-			std::cout << "TinyObjReader: " << reader.Warning();
-		}
-
-		auto& attrib = reader.GetAttrib();
-		auto& shapes = reader.GetShapes();
-		auto& materials = reader.GetMaterials();
-
-		Object* object;
-		std::vector<Vertex> tmpVertices;
-		std::vector<uint32_t> tmpIndices;
-
-
-		// Loop over shapes
-		for (size_t s = 0; s < shapes.size(); s++) {
-			// Loop over faces(polygon)
-			size_t index_offset = 0;
-			for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-				size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
-
-				// Loop over vertices in the face.
-				for (size_t v = 0; v < fv; v++) {
-					Vertex tmpVertex{};
-
-					// access to vertex
-					tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-					tmpVertex.pos.x = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
-					tmpVertex.pos.y = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
-					tmpVertex.pos.z = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
-
-					// Check if `normal_index` is zero or positive. negative = no normal data
-					if (idx.normal_index >= 0) {
-						tmpVertex.normal.x = attrib.normals[3 * size_t(idx.normal_index) + 0];
-						tmpVertex.normal.y = attrib.normals[3 * size_t(idx.normal_index) + 1];
-						tmpVertex.normal.z = attrib.normals[3 * size_t(idx.normal_index) + 2];
-					}
-
-					// Check if `texcoord_index` is zero or positive. negative = no texcoord data
-					if (idx.texcoord_index >= 0) {
-						tmpVertex.texCoord.x = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
-						tmpVertex.texCoord.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
-					}
-
-					// Optional: vertex colors
-					// tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
-					// tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
-					// tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
-
-					tmpVertices.push_back(tmpVertex);
-
-
-					// Store the vertex index in the index buffer
-					tmpIndices.push_back(static_cast<uint32_t>(tmpIndices.size()));
-
-				}
-				index_offset += fv;
-
-				
-				// per-face material
-				shapes[s].mesh.material_ids[f];
-			}
-			object = new Object(shapes[s].name, tmpVertices, tmpIndices);
-
-
-			renderer.addObject(object);
-		}
-
-		/*
-		for (Vertex v : vertices) {
-			std::cout << v.pos.x << " " << v.pos.y << " " << v.pos.z << " " << v.normal.x << " " << v.normal.y << " " << v.normal.z << " " << v.texCoord.x << " " << v.texCoord.y << std::endl;
-		}
-
-		for (uint32_t i : indices) {
-			std::cout << i << std::endl;
-		}*/
 
 
 
@@ -245,7 +96,46 @@ private:
 			renderer.drawFrame();
 			glfwPollEvents();
 		}
+
 		vkDeviceWaitIdle(device);
+		
+		// -------------------------SWAPCHAIN CLEANUP--------------------------------
+
+		vkDestroyImageView(device, colorImageView, nullptr);
+		vkDestroyImage(device, colorImage, nullptr);
+		vkFreeMemory(device, colorImageMemory, nullptr);
+
+		vkDestroyImageView(device, depthImageView, nullptr);
+		vkDestroyImage(device, depthImage, nullptr);
+		vkFreeMemory(device, depthImageMemory, nullptr);
+
+		for (auto framebuffer : swapChainFramebuffers) {
+			vkDestroyFramebuffer(device, framebuffer, nullptr);
+		}
+
+		for (auto imageView : swapChainImageViews) {
+			vkDestroyImageView(device, imageView, nullptr);
+		}
+
+		vkDestroySwapchainKHR(device, swapChain, nullptr);
+		
+		// ------------------------------TEXTURE CLEANUP-------------------------------
+
+		
+		vkDestroyImageView(device, textureImageView, nullptr);
+
+		vkDestroyImage(device, textureImage, nullptr);
+		vkFreeMemory(device, textureImageMemory, nullptr);
+
+		vkDestroyImageView(device, bunnyImageView, nullptr);
+
+		vkDestroyImage(device, bunnyImage, nullptr);
+		vkFreeMemory(device, bunnyImageMemory, nullptr);
+
+
+		
+		// -------------------------------------------------------------
+
 	}
 
 	void drawFrame() {
@@ -323,8 +213,6 @@ private:
 		createSwapChain();
 		createImageViews();
 		createRenderPass();
-		createDescriptorSetLayout();
-		createGraphicsPipeline();
 		createColorResources();
 		createDepthResources();
 		createFramebuffers();
@@ -332,22 +220,12 @@ private:
 		createBunny();
 		createTextureImage();
 		createTextureImageView();
-		createTextureSampler();
 		createCommandBuffers();
-		createVertexBuffer();
-		createIndexBuffer();
-		createUniformBuffers();
-		createDescriptorPool();
-		createDescriptorSets();
-		createSyncObjects();
 	}
 
 	void cleanup() {
-		vkDestroyImageView(device, colorImageView, nullptr);
-		vkDestroyImage(device, colorImage, nullptr);
-		vkFreeMemory(device, colorImageMemory, nullptr);
+		
 
-		vkDestroySampler(device, textureSampler, nullptr);
 		vkDestroyImageView(device, textureImageView, nullptr);
 		vkDestroyImage(device, textureImage, nullptr);
 		vkFreeMemory(device, textureImageMemory, nullptr);
@@ -356,29 +234,12 @@ private:
 		vkDestroyImage(device, bunnyImage, nullptr);
 		vkFreeMemory(device, bunnyImageMemory, nullptr);
 
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-			vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
-		}
+		
 
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-		vkDestroyBuffer(device, indexBuffer, nullptr);
-		vkFreeMemory(device, indexBufferMemory, nullptr);
-
-		vkDestroyBuffer(device, vertexBuffer, nullptr);
-		vkFreeMemory(device, vertexBufferMemory, nullptr);
-
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-			vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-			vkDestroyFence(device, inFlightFences[i], nullptr);
-		}
-
+		
 		vkDestroyCommandPool(device, commandPool, nullptr);
 		for (auto framebuffer : swapChainFramebuffers) {
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
@@ -476,6 +337,17 @@ private:
 		VkPhysicalDeviceFeatures deviceFeatures{};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 		deviceFeatures.sampleRateShading = VK_TRUE;
+		
+
+		VkPhysicalDeviceVulkan12Features vulkan12Features{};
+		vulkan12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+		vulkan12Features.runtimeDescriptorArray = VK_TRUE;  // Enable the feature
+		
+
+		VkPhysicalDeviceFeatures2 deviceFeatures2{};
+		deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		deviceFeatures2.features = deviceFeatures;  // Set traditional features here
+		deviceFeatures2.pNext = &vulkan12Features;  // Link Vulkan 1.2 features
 
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -483,13 +355,14 @@ private:
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-		createInfo.pEnabledFeatures = &deviceFeatures;
+		createInfo.pEnabledFeatures = VK_NULL_HANDLE;
 
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+		createInfo.pNext = &deviceFeatures2;
 
 		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create logical device!");
@@ -707,13 +580,19 @@ private:
 		attributeDescription3.format = VK_FORMAT_R32G32_SFLOAT;
 		attributeDescription3.offset = offsetof(Vertex, texCoord);
 
-		VkVertexInputAttributeDescription descriptions[] = { attributeDescription0 , attributeDescription1, attributeDescription2, attributeDescription3 };
+		VkVertexInputAttributeDescription attributeDescription4{};
+		attributeDescription4.binding = 0;
+		attributeDescription4.location = 4;
+		attributeDescription4.format = VK_FORMAT_R32_UINT;
+		attributeDescription4.offset = offsetof(Vertex, ID);
+
+		VkVertexInputAttributeDescription descriptions[] = { attributeDescription0 , attributeDescription1, attributeDescription2, attributeDescription3, attributeDescription4 };
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
 		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription; // Optional
-		vertexInputInfo.vertexAttributeDescriptionCount = 4;
+		vertexInputInfo.vertexAttributeDescriptionCount = 5;
 		vertexInputInfo.pVertexAttributeDescriptions = descriptions; // Optional
 
 		// INPUT ASSEMBLY
@@ -897,7 +776,7 @@ private:
 	}
 
 	void createVertexBuffer() {
-		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size() * 100;
 		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			stagingBuffer, stagingBufferMemory);
@@ -918,7 +797,7 @@ private:
 	}
 
 	void createIndexBuffer() {
-		VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+		VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size() * 100;
 
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
@@ -1797,8 +1676,8 @@ private:
 	}
 
 	// WINDOW
-	uint32_t WIDTH = 800;
-	uint32_t HEIGHT = 600;
+	uint32_t WIDTH = 1600;
+	uint32_t HEIGHT = 900;
 
 	GLFWwindow* window;
 

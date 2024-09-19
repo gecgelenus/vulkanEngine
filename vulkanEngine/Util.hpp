@@ -5,11 +5,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #define OBJECT_COUNT 1000
 
+#define STORAGE_MB size_t(1048576)
+
 struct Vertex {
 	glm::vec3 pos;
 	glm::vec3 normal;
 	glm::vec3 color;
 	glm::vec2 texCoord;
+	glm::uint32 ID;
 };
 
 
