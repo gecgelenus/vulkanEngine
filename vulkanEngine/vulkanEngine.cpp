@@ -115,11 +115,7 @@ private:
 		glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 
 
-		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkResetCommandBuffer(commandBuffers[i], 0);
-			recordCommandBuffer(commandBuffers[i], i);
-		}
-
+		
 
 
 		Renderer renderer;
@@ -147,7 +143,8 @@ private:
 		renderer.uniformBuffersMemory = uniformBuffersMemory;
 		renderer.uniformBuffersMapped = uniformBuffersMapped;
 		renderer.renderPass = renderPass;
-		
+		renderer.createObjectPropertyBuffer();
+
 
 
 		std::string inputfile = "bunnyCube.obj";
@@ -215,7 +212,7 @@ private:
 
 
 					// Store the vertex index in the index buffer
-					tmpIndices.push_back(static_cast<uint32_t>(indices.size()));
+					tmpIndices.push_back(static_cast<uint32_t>(tmpIndices.size()));
 
 				}
 				index_offset += fv;
@@ -225,6 +222,8 @@ private:
 				shapes[s].mesh.material_ids[f];
 			}
 			object = new Object(shapes[s].name, tmpVertices, tmpIndices);
+
+
 			renderer.addObject(object);
 		}
 
@@ -952,6 +951,21 @@ private:
 		}
 	}
 
+
+	void createObjectPropertyBuffer() {
+		VkDeviceSize bufferSize = sizeof(objectProperties) * OBJECT_COUNT;
+
+		uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+		uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+		uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+
+			vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
+		}
+	}
+
 	void createDescriptorSetLayout() {
 		VkDescriptorSetLayoutBinding uboLayoutBinding{};
 		uboLayoutBinding.binding = 0;
@@ -974,11 +988,18 @@ private:
 		textureBinding.pImmutableSamplers = nullptr;
 		textureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		VkDescriptorSetLayoutBinding bindings[] = { uboLayoutBinding , samplerLayoutBinding, textureBinding };
+		VkDescriptorSetLayoutBinding objectPropertyBinding{};
+		objectPropertyBinding.binding = 3;
+		objectPropertyBinding.descriptorCount = 1;
+		objectPropertyBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		objectPropertyBinding.pImmutableSamplers = nullptr;
+		objectPropertyBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		VkDescriptorSetLayoutBinding bindings[] = { uboLayoutBinding , samplerLayoutBinding, textureBinding, objectPropertyBinding };
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = 3;
+		layoutInfo.bindingCount = 4;
 		layoutInfo.pBindings = bindings;
 
 		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
@@ -999,11 +1020,15 @@ private:
 		samplerPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		samplerPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-		VkDescriptorPoolSize sizes[] = { uniformPool, texturePool, samplerPool };
+		VkDescriptorPoolSize objectPropertyPool{};
+		objectPropertyPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		objectPropertyPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+		VkDescriptorPoolSize sizes[] = { uniformPool, texturePool, samplerPool, objectPropertyPool };
 
 		VkDescriptorPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = 3;
+		poolInfo.poolSizeCount = 4;
 		poolInfo.pPoolSizes = sizes;
 		poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 

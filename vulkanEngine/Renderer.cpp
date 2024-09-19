@@ -16,6 +16,49 @@ Renderer::~Renderer()
 {
 }
 
+void Renderer::createObjectPropertyBuffer()
+{
+	
+
+
+
+	VkDeviceSize bufferSize = sizeof(objectProperties) * OBJECT_COUNT;
+
+	objectPropertyBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	objectPropertyBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+	objectPropertyBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, objectPropertyBuffers[i], objectPropertyBuffersMemory[i]);
+
+		vkMapMemory(device, objectPropertyBuffersMemory[i], 0, bufferSize, 0, &objectPropertyBuffersMapped[i]);
+	}
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = objectPropertyBuffers[i];
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(objectProperties) * OBJECT_COUNT;
+
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = descriptorSets[i];
+		descriptorWrite.dstBinding = 3;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &bufferInfo;
+		descriptorWrite.pImageInfo = nullptr; // Optional
+		descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+
+		VkWriteDescriptorSet sets[] = { descriptorWrite};
+
+		vkUpdateDescriptorSets(device, 1, sets, 0, nullptr);
+	}
+	
+}
+
 void Renderer::drawFrame()
 {
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -36,15 +79,17 @@ void Renderer::drawFrame()
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
 	updateUniformBuffer(imageIndex);
 
+
 	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
+
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -70,6 +115,7 @@ void Renderer::addObject(Object* obj)
 	this->indices = obj->indices;
 	this->objects.push_back(obj);
 
+	// VERTEX
 
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 	VkBuffer stagingBuffer;
@@ -84,8 +130,38 @@ void Renderer::addObject(Object* obj)
 	memcpy(data, vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
+	copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+	// INDEX
+
+	bufferSize = sizeof(indices[0]) * indices.size();
+
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer, stagingBufferMemory);
+	void* data2;
+
+	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data2);
+	memcpy(data2, indices.data(), (size_t)bufferSize);
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+
+	vkDestroyBuffer(device, stagingBuffer, nullptr);
+	vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+
+	
+		for (Vertex v : vertices) {
+			std::cout << v.pos.x << " " << v.pos.y << " " << v.pos.z << " " << v.normal.x << " " << v.normal.y << " " << v.normal.z << " " << v.texCoord.x << " " << v.texCoord.y << std::endl;
+		}
+
+		for (uint32_t i : indices) {
+			std::cout << i << std::endl;
+		}
 
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkResetCommandBuffer(commandBuffers[i], 0);
@@ -101,6 +177,9 @@ void Renderer::addObject(Object* obj)
 
 void Renderer::updateUniformBuffer(uint32_t targetFrame)
 {
+	std::vector<objectProperties> propertyArray(1000);
+
+
 	float currentTime = glfwGetTime();
 	float deltaTime = float(currentTime - lastTime);
 	lastTime = currentTime;
@@ -175,6 +254,24 @@ void Renderer::updateUniformBuffer(uint32_t targetFrame)
 	ubo.proj[1][1] *= -1;
 
 	memcpy(uniformBuffersMapped[targetFrame], &ubo, sizeof(ubo));
+
+	propertyArray[0].objectID = 0;
+	propertyArray[0].textureID = 0;
+	propertyArray[0].materialID = 0;
+
+	propertyArray[1].objectID = 1;
+	propertyArray[1].textureID = 1;
+	propertyArray[1].materialID = 1;
+
+
+	propertyArray[5].objectID = 31;
+	propertyArray[5].textureID = 31;
+	propertyArray[5].materialID = 31;
+
+	memcpy(objectPropertyBuffersMapped[targetFrame], propertyArray.data(), sizeof(objectProperties)* OBJECT_COUNT);
+
+
+
 }
 
 void Renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t index)
@@ -297,4 +394,40 @@ uint32_t Renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags pro
 	}
 
 	throw std::runtime_error("failed to find suitable memory type!");
+}
+
+void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0; // Optional
+	copyRegion.dstOffset = 0; // Optional
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(graphicsQueue);
+
+	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }

@@ -10,9 +10,10 @@
 #include "Object.hpp"
 
 struct UniformBufferObject {
+	glm::mat4 model[1000];
 	glm::mat4 view;
 	glm::mat4 proj;
-	glm::mat4 model[1000];
+	
 };
 
 
@@ -31,6 +32,8 @@ class Renderer {
 public:
 	Renderer();
 	~Renderer();
+
+	void createObjectPropertyBuffer();
 
 	void drawFrame();
 	void addObject(Object*);
@@ -75,6 +78,11 @@ public:
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 	std::vector<void*> uniformBuffersMapped;
 
+	std::vector<VkBuffer> objectPropertyBuffers;
+	std::vector<VkDeviceMemory> objectPropertyBuffersMemory;
+	std::vector<void*> objectPropertyBuffersMapped;
+
+
 	VkRenderPass renderPass;
 
 	uint32_t WIDTH = 800;
@@ -87,6 +95,7 @@ public:
 private:
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	std::vector<Object*> objects;
 
 	const int MAX_FRAMES_IN_FLIGHT = 3;
