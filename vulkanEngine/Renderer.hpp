@@ -3,6 +3,8 @@
 #include <GLFW/glfw3.h>
 
 
+#include "Texture.hpp"
+
 
 
 
@@ -44,6 +46,7 @@ public:
 	void deleteObject(std::string& name);
 
 	Object* getObject(std::string& name);
+	void setObjectTexture(std::string& name, Texture* texture);
 
 
 	void readOBJ(std::string& path);
@@ -52,7 +55,7 @@ public:
 	void createIndexBuffer();
 	void createUniformBuffers();
 
-
+	void addTexture(Texture* texture);
 
 	void createDescriptorPool();
 	void createDescriptorSetLayout();
@@ -126,12 +129,19 @@ public:
 	UniformBufferObject ubo;
 
 private:
+
+	std::vector<VkImageView> textureViews;
+	std::vector<Texture*> textures;
+
+
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 	void resetBuffers();
 
+	void updateTextureDescriptors();
+	void deleteTexture(Texture* texture);
 
 	std::vector<Object*> objects;
 

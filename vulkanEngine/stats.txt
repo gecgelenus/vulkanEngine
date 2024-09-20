@@ -1,0 +1,198 @@
+{
+  "General": {
+    "API": "Vulkan", 
+    "apiVersion": "1.3.280", 
+    "GPU": "NVIDIA GeForce RTX 2080 SUPER", 
+    "deviceType": 2, 
+    "maxMemoryAllocationCount": 4294967295, 
+    "bufferImageGranularity": 1024, 
+    "nonCoherentAtomSize": 64, 
+    "memoryHeapCount": 3, 
+    "memoryTypeCount": 6
+  }, 
+  "Total": {
+    "BlockCount": 4, 
+    "BlockBytes": 45547520, 
+    "AllocationCount": 3, 
+    "AllocationBytes": 11993088, 
+    "UnusedRangeCount": 1, 
+    "AllocationSizeMin": 2555904, 
+    "AllocationSizeMax": 5242880
+  }, 
+  "MemoryInfo": {
+    "Heap 0": {
+      "Flags": ["DEVICE_LOCAL"], 
+      "Size": 8374976512, 
+      "Budget": {
+        "BudgetBytes": 7569670144, 
+        "UsageBytes": 232976384
+      }, 
+      "Stats": {
+        "BlockCount": 3, 
+        "BlockBytes": 11993088, 
+        "AllocationCount": 3, 
+        "AllocationBytes": 11993088, 
+        "UnusedRangeCount": 0, 
+        "AllocationSizeMin": 2555904, 
+        "AllocationSizeMax": 5242880
+      }, 
+      "MemoryPools": {
+        "Type 1": {
+          "Flags": ["DEVICE_LOCAL"], 
+          "Stats": {
+            "BlockCount": 3, 
+            "BlockBytes": 11993088, 
+            "AllocationCount": 3, 
+            "AllocationBytes": 11993088, 
+            "UnusedRangeCount": 0, 
+            "AllocationSizeMin": 2555904, 
+            "AllocationSizeMax": 5242880
+          }
+        }, 
+        "Type 2": {
+          "Flags": ["DEVICE_LOCAL"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }
+      }
+    }, 
+    "Heap 1": {
+      "Flags": [], 
+      "Size": 8545173504, 
+      "Budget": {
+        "BudgetBytes": 7849481319, 
+        "UsageBytes": 70864896
+      }, 
+      "Stats": {
+        "BlockCount": 1, 
+        "BlockBytes": 33554432, 
+        "AllocationCount": 0, 
+        "AllocationBytes": 0, 
+        "UnusedRangeCount": 1
+      }, 
+      "MemoryPools": {
+        "Type 0": {
+          "Flags": [], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }, 
+        "Type 3": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT"], 
+          "Stats": {
+            "BlockCount": 1, 
+            "BlockBytes": 33554432, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 1
+          }
+        }, 
+        "Type 4": {
+          "Flags": ["HOST_VISIBLE", "HOST_COHERENT", "HOST_CACHED"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }
+      }
+    }, 
+    "Heap 2": {
+      "Flags": ["DEVICE_LOCAL"], 
+      "Size": 224395264, 
+      "Budget": {
+        "BudgetBytes": 220016640, 
+        "UsageBytes": 4378624
+      }, 
+      "Stats": {
+        "BlockCount": 0, 
+        "BlockBytes": 0, 
+        "AllocationCount": 0, 
+        "AllocationBytes": 0, 
+        "UnusedRangeCount": 0
+      }, 
+      "MemoryPools": {
+        "Type 5": {
+          "Flags": ["DEVICE_LOCAL", "HOST_VISIBLE", "HOST_COHERENT"], 
+          "Stats": {
+            "BlockCount": 0, 
+            "BlockBytes": 0, 
+            "AllocationCount": 0, 
+            "AllocationBytes": 0, 
+            "UnusedRangeCount": 0
+          }
+        }
+      }
+    }
+  }, 
+  "DefaultPools": {
+    "Type 0": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 1": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+        {"Type": "IMAGE_OPTIMAL", "Size": 2555904, "Usage": 6}, 
+        {"Type": "IMAGE_OPTIMAL", "Size": 5242880, "Usage": 6}, 
+        {"Type": "IMAGE_OPTIMAL", "Size": 4194304, "Usage": 6}
+      ]
+    }, 
+    "Type 2": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 3": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+        "0": {
+          "MapRefCount": 0, 
+          "TotalBytes": 33554432, 
+          "UnusedBytes": 33554432, 
+          "Allocations": 0, 
+          "UnusedRanges": 1, 
+          "Suballocations": [
+            {"Offset": 0, "Type": "FREE", "Size": 33554432}
+          ]
+        }
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 4": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 5": {
+      "PreferredBlockSize": 28049408, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }
+  }, 
+  "CustomPools": {
+  }
+}

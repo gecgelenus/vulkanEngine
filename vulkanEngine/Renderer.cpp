@@ -1,6 +1,5 @@
 #include "Renderer.hpp"
 #include <iostream>
-#include "Object.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -221,6 +220,14 @@ Object* Renderer::getObject(std::string& name)
 	return nullptr;
 }
 
+void Renderer::setObjectTexture(std::string& name, Texture* texture)
+{
+
+	Object* obj = getObject(name);
+	obj->properties.textureID = texture->textureID;
+
+}
+
 void Renderer::readOBJ(std::string& path)
 {
 
@@ -372,15 +379,8 @@ void Renderer::createUniformBuffers()
 		propertybufferInfo.offset = 0;
 		propertybufferInfo.range = sizeof(objectProperties) * OBJECT_COUNT;
 
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = textureImageView;
-
-		VkDescriptorImageInfo bunnyInfo{};
-		bunnyInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		bunnyInfo.imageView = bunnyImageView;
-
-		VkDescriptorImageInfo textureInfos[] = { imageInfo, bunnyInfo };
+		
+		
 
 		VkDescriptorImageInfo samplerInfo{};
 		samplerInfo.sampler = textureSampler;
@@ -406,15 +406,7 @@ void Renderer::createUniformBuffers()
 		descriptorWriteSampler.pImageInfo = &samplerInfo;
 		descriptorWriteSampler.pTexelBufferView = nullptr; // Optional
 
-		VkWriteDescriptorSet descriptorWriteTex{};
-		descriptorWriteTex.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWriteTex.dstSet = descriptorSets[i];
-		descriptorWriteTex.dstBinding = 2;
-		descriptorWriteTex.dstArrayElement = 0;
-		descriptorWriteTex.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		descriptorWriteTex.descriptorCount = 2;
-		descriptorWriteTex.pImageInfo = textureInfos;
-		descriptorWriteTex.pTexelBufferView = nullptr; // Optional
+		
 
 		VkWriteDescriptorSet descriptorWriteProperty{};
 		descriptorWriteProperty.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -428,13 +420,28 @@ void Renderer::createUniformBuffers()
 		descriptorWriteProperty.pTexelBufferView = nullptr; // Optional
 
 
-		VkWriteDescriptorSet sets[] = { descriptorWrite, descriptorWriteTex, descriptorWriteSampler, descriptorWriteProperty };
+		VkWriteDescriptorSet sets[] = { descriptorWrite, descriptorWriteSampler, descriptorWriteProperty };
 
-		vkUpdateDescriptorSets(device, 4, sets, 0, nullptr);
+		vkUpdateDescriptorSets(device, 3, sets, 0, nullptr);
 	}
 
 
 }
+
+void Renderer::addTexture(Texture* texture)
+{
+
+	textures.push_back(texture);
+	texture->textureID = textureViews.size();
+	textureViews.push_back(texture->getImageView());
+
+	updateTextureDescriptors();
+
+
+}
+
+
+
 
 void Renderer::createDescriptorPool()
 {
@@ -485,7 +492,7 @@ void Renderer::createDescriptorSetLayout()
 
 	VkDescriptorSetLayoutBinding textureBinding{};
 	textureBinding.binding = 2;
-	textureBinding.descriptorCount = 2;
+	textureBinding.descriptorCount = 64;
 	textureBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 	textureBinding.pImmutableSamplers = nullptr;
 	textureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -881,6 +888,47 @@ void Renderer::resetBuffers()
 		vkResetCommandBuffer(commandBuffers[i], 0);
 		recordCommandBuffer(commandBuffers[i], i);
 	}
+
+
+}
+
+void Renderer::updateTextureDescriptors()
+{
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+
+		std::vector<VkDescriptorImageInfo> descriptorInfos;
+
+
+
+		for (int i = 0; i < textureViews.size(); i++) {
+			VkDescriptorImageInfo imageInfo{};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = textureViews[i];
+
+			descriptorInfos.push_back(imageInfo);
+		}
+
+		VkWriteDescriptorSet descriptorWriteTex{};
+		descriptorWriteTex.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWriteTex.dstSet = descriptorSets[i];
+		descriptorWriteTex.dstBinding = 2;
+		descriptorWriteTex.dstArrayElement = 0;
+		descriptorWriteTex.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		descriptorWriteTex.descriptorCount = descriptorInfos.size();
+		descriptorWriteTex.pImageInfo = descriptorInfos.data();
+		descriptorWriteTex.pTexelBufferView = nullptr; // Optional
+
+
+
+		vkUpdateDescriptorSets(device, 1, &descriptorWriteTex, 0, nullptr);
+	}
+
+
+}
+
+void Renderer::deleteTexture(Texture* texture)
+{
+	//TODO
 
 
 }

@@ -5,6 +5,8 @@
 #include <GLFW/glfw3.h>
 
 
+
+
 #include <vulkan/vulkan.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -19,7 +21,10 @@
 #include <limits>
 #include <algorithm>
 #include <fstream>
+
 #include "Renderer.hpp"
+
+#include "Texture.hpp"
 
 
 
@@ -40,6 +45,20 @@ private:
 	void mainLoop() {
 		glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 
+		VmaVulkanFunctions vulkanFunctions = {};
+		vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+		vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+		VmaAllocatorCreateInfo allocatorCreateInfo = {};
+		allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
+		allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_3;
+		allocatorCreateInfo.physicalDevice = physicalDevice;
+		allocatorCreateInfo.device = device;
+		allocatorCreateInfo.instance = instance;
+		allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
+
+		VmaAllocator allocator;
+		vmaCreateAllocator(&allocatorCreateInfo, &allocator);
 
 		
 
@@ -63,7 +82,7 @@ private:
 		renderer.textureImageView = textureImageView;
 		renderer.bunnyImageView = bunnyImageView;
 
-
+		
 		renderer.createDescriptorPool();
 		renderer.createDescriptorSetLayout();
 		renderer.allocateDescriptorSets();
@@ -79,16 +98,54 @@ private:
 		renderer.createIndexBuffer();
 		renderer.createUniformBuffers();
 
+		std::string texturePath = "bunny.jpg";
+		std::string texturePath2 = "texture.jpg";
+		std::string texturePath3 = "viking_room.png";
+
+
+		Texture* texture = new Texture(allocator, device, commandPool, graphicsQueue, texturePath);
+		Texture* texture2 = new Texture(allocator, device, commandPool, graphicsQueue, texturePath2);
+		Texture* texture3 = new Texture(allocator, device, commandPool, graphicsQueue, texturePath3);
+
+
+		renderer.addTexture(texture);
+		renderer.addTexture(texture2);
+		renderer.addTexture(texture3);
+
+
+
 
 		std::string path = "monkeys.obj";
-		
+		std::string path2 = "viking_room.obj";
+
+		std::string objName = "Suzanne";
+		std::string objName2 = "mesh_all1_Texture1_0";
+
 
 		renderer.readOBJ(path);
-		
+		renderer.readOBJ(path2);
+
+		renderer.getObject(objName2)->position = glm::vec3(5.0f, 5.0f, 0.0f);
+		renderer.setObjectTexture(objName, texture);
+		renderer.setObjectTexture(objName2, texture3);
 
 
 
 
+		char* statsString;
+
+		// Get the stats string
+		vmaBuildStatsString(allocator, &statsString, VK_TRUE);  // VK_TRUE for detailed statistics
+
+		std::fstream file;
+		file.open("stats.txt");
+		std::string stats(statsString);
+
+		file.write(stats.data(), stats.length());
+		file.close();
+
+		// Free the allocated string by VMA
+		vmaFreeStatsString(allocator, statsString);
 
 		
 		renderer.createSyncObjects();
@@ -217,9 +274,6 @@ private:
 		createDepthResources();
 		createFramebuffers();
 		createCommandPool();
-		createBunny();
-		createTextureImage();
-		createTextureImageView();
 		createCommandBuffers();
 	}
 
