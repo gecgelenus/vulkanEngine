@@ -139,7 +139,12 @@
   <ItemGroup>
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Object.hpp" />
+    <ClCompile Include="ObjectText.cpp" />
+    <ClCompile Include="RenderBatch.cpp" />
+    <ClCompile Include="RenderBatchText.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="RenderQueue.cpp" />
+    <ClCompile Include="RenderQueue.hpp" />
     <ClCompile Include="TextRenderer.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="vulkanEngine.cpp" />
@@ -151,7 +156,9 @@
     <None Include="shaderText.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ObjectText.hpp" />
     <ClInclude Include="RenderBatch.hpp" />
+    <ClInclude Include="RenderBatchText.hpp" />
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="TextRenderer.hpp" />
     <ClInclude Include="Texture.hpp" />

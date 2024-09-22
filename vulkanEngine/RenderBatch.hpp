@@ -11,6 +11,7 @@ class RenderBatch {
 
 public:
 	RenderBatch();
+	RenderBatch(std::string& name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
 	~RenderBatch();
 
 	void addObject(Object*);
@@ -31,9 +32,11 @@ public:
 	void createDescriptorSetLayout();
 	void allocateDescriptorSets();
 	void createTextureSampler();
-	void updateUniformBuffer(uint32_t targetFrame);
+	void updateUniformBuffer(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up);
+	void createGraphicsPipeline();
 
 
+	std::string name;
 
 	VkInstance instance;
 	VkDevice device;
@@ -52,6 +55,7 @@ public:
 	VkPipeline graphicsPipeline;
 	VkPipelineLayout pipelineLayout;
 
+	std::vector<VkFramebuffer> swapChainFramebuffers;
 	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_8_BIT;
 
 	VkBuffer vertexBuffer;
@@ -90,6 +94,28 @@ public:
 
 	
 	UniformBufferObject ubo;
+	std::vector<VkImageView> textureViews;
+	std::vector<Texture*> textures;
 
+	const char* vertexPath;
+	const char* fragmentPath;
+
+protected:
+
+	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+	void resetBuffers();
+	VkShaderModule createShaderModule(const std::vector<char>& code);
+	static std::vector<char> readFile(const std::string& filename);
+
+
+	void updateTextureDescriptors();
+	void deleteTexture(Texture* texture);
+
+	std::vector<Object*> objects;
+
+	const int MAX_FRAMES_IN_FLIGHT = 3;
 
 };

@@ -7,6 +7,7 @@
 
 class Object {
 public:
+	Object();
 	Object(std::string name, std::vector<Vertex> vertices, std::vector<uint32_t> indices);
 	~Object();
 
@@ -25,7 +26,7 @@ public:
 
 	objectProperties properties;
 
-private:
+protected:
 	uint32_t objectID;
 
 
