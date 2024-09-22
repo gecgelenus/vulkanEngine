@@ -11,12 +11,12 @@
     "memoryTypeCount": 6
   }, 
   "Total": {
-    "BlockCount": 4, 
-    "BlockBytes": 45547520, 
-    "AllocationCount": 3, 
-    "AllocationBytes": 11993088, 
+    "BlockCount": 5, 
+    "BlockBytes": 46596096, 
+    "AllocationCount": 4, 
+    "AllocationBytes": 13041664, 
     "UnusedRangeCount": 1, 
-    "AllocationSizeMin": 2555904, 
+    "AllocationSizeMin": 1048576, 
     "AllocationSizeMax": 5242880
   }, 
   "MemoryInfo": {
@@ -25,27 +25,27 @@
       "Size": 8374976512, 
       "Budget": {
         "BudgetBytes": 7569670144, 
-        "UsageBytes": 232976384
+        "UsageBytes": 234024960
       }, 
       "Stats": {
-        "BlockCount": 3, 
-        "BlockBytes": 11993088, 
-        "AllocationCount": 3, 
-        "AllocationBytes": 11993088, 
+        "BlockCount": 4, 
+        "BlockBytes": 13041664, 
+        "AllocationCount": 4, 
+        "AllocationBytes": 13041664, 
         "UnusedRangeCount": 0, 
-        "AllocationSizeMin": 2555904, 
+        "AllocationSizeMin": 1048576, 
         "AllocationSizeMax": 5242880
       }, 
       "MemoryPools": {
         "Type 1": {
           "Flags": ["DEVICE_LOCAL"], 
           "Stats": {
-            "BlockCount": 3, 
-            "BlockBytes": 11993088, 
-            "AllocationCount": 3, 
-            "AllocationBytes": 11993088, 
+            "BlockCount": 4, 
+            "BlockBytes": 13041664, 
+            "AllocationCount": 4, 
+            "AllocationBytes": 13041664, 
             "UnusedRangeCount": 0, 
-            "AllocationSizeMin": 2555904, 
+            "AllocationSizeMin": 1048576, 
             "AllocationSizeMax": 5242880
           }
         }, 
@@ -112,8 +112,8 @@
       "Flags": ["DEVICE_LOCAL"], 
       "Size": 224395264, 
       "Budget": {
-        "BudgetBytes": 220016640, 
-        "UsageBytes": 4378624
+        "BudgetBytes": 213348352, 
+        "UsageBytes": 11046912
       }, 
       "Stats": {
         "BlockCount": 0, 
@@ -149,6 +149,7 @@
       "Blocks": {
       }, 
       "DedicatedAllocations": [
+        {"Type": "IMAGE_OPTIMAL", "Size": 1048576, "Usage": 6}, 
         {"Type": "IMAGE_OPTIMAL", "Size": 2555904, "Usage": 6}, 
         {"Type": "IMAGE_OPTIMAL", "Size": 5242880, "Usage": 6}, 
         {"Type": "IMAGE_OPTIMAL", "Size": 4194304, "Usage": 6}

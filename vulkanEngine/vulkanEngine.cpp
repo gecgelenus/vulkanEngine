@@ -4,7 +4,11 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 
+#include "stb_image_write.h"
+#define STB_TRUETYPE_IMPLEMENTATION 
+#include "stb_truetype.h" 
 
 
 #include <vulkan/vulkan.h>
@@ -24,6 +28,7 @@
 
 #include "Renderer.hpp"
 
+#include "TextRenderer.hpp"
 #include "Texture.hpp"
 
 
@@ -98,14 +103,118 @@ private:
 		renderer.createIndexBuffer();
 		renderer.createUniformBuffers();
 
+		//------------------------ TEXT RENDERER ----------------------------------------
+		TextRenderer textRenderer;
+		textRenderer.instance = instance;
+		textRenderer.device = device;
+		textRenderer.pDevice = physicalDevice;
+		textRenderer.graphicsQueue = graphicsQueue;
+		textRenderer.presentQueue = presentQueue;
+		textRenderer.createCommandPool();
+		textRenderer.createCommandBuffers();
+
+		textRenderer.window = window;
+		textRenderer.swapChain = swapChain;
+		textRenderer.swapChainFramebuffers = swapChainFramebuffers;
+		textRenderer.swapChainExtent = swapChainExtent;
+		textRenderer.surface = surface;
+
+		textRenderer.renderPass = renderPass;
+
+		textRenderer.createDescriptorPool();
+		textRenderer.createDescriptorSetLayout();
+		textRenderer.allocateDescriptorSets();
+		textRenderer.createTextureSampler();
+
+		descriptorSetLayoutText = textRenderer.descriptorSetLayout;
+		createGraphicsPipelineText();
+
+		textRenderer.graphicsPipeline = graphicsPipelineText;
+		textRenderer.pipelineLayout = pipelineLayoutText;
+
+		textRenderer.createVertexBuffer();
+		textRenderer.createIndexBuffer();
+		textRenderer.createUniformBuffers();
+		//------------------------ TEXT RENDERER END ------------------------------------
+
+		Vertex v1;
+		Vertex v2;
+		Vertex v3;
+		Vertex v4;
+
+		v1.pos = glm::vec3(-0.02, 0.02, 0);
+		v1.texCoord = glm::vec2(float(236.0f / 512.0f), float(51.0f / 512.0f));
+
+		v2.pos = glm::vec3(0.02, 0.02, 0);
+		v2.texCoord = glm::vec2(float(253.0f / 512.0f), float(51.0f / 512.0f));
+
+		v3.pos = glm::vec3(0.02, -0.02, 0);
+		v3.texCoord = glm::vec2(float(253.0f / 512.0f), float(30.0f / 512.0f));
+
+		v4.pos = glm::vec3(-0.02, -0.02, 0);
+		v4.texCoord = glm::vec2(float(236.0f / 512.0f), float(30.0f / 512.0f));
+
+		std::vector<Vertex> tmpVertices;
+		std::vector<uint32_t> tmpIndices;
+
+		tmpVertices.push_back(v1);
+		tmpVertices.push_back(v2);
+		tmpVertices.push_back(v3);
+		tmpVertices.push_back(v4);
+
+		tmpIndices.push_back(uint32_t(3));
+		tmpIndices.push_back(uint32_t(0));
+		tmpIndices.push_back(uint32_t(1));
+		tmpIndices.push_back(uint32_t(2));
+		tmpIndices.push_back(uint32_t(3));
+		tmpIndices.push_back(uint32_t(1));
+
+		Object* obj = new Object("a", tmpVertices, tmpIndices);
+
+		textRenderer.addObject(obj);
+
+		size_t size;
+		unsigned char* ttf_buffer;
+		unsigned char bitmap[512 * 512];  // Font atlas size 512x512
+
+		FILE* fontFile = fopen("Roboto-Black.ttf", "rb");
+		fseek(fontFile, 0, SEEK_END);
+		size = ftell(fontFile); /* how long is the file ? */
+		fseek(fontFile, 0, SEEK_SET); /* reset */
+
+		ttf_buffer = (unsigned char*)malloc(size * sizeof(unsigned char));
+
+		fread(ttf_buffer, size, 1, fontFile);
+		fclose(fontFile);
+		// Initialize the font and bake it to a bitmap
+		stbtt_bakedchar cdata[96]; // ASCII 32..126 is 96 glyphs	
+		stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, bitmap, 512, 512, 32, 96, cdata);
+		stbi_write_png("font_bitmap.png", 512, 512, 1, bitmap, 512);
+
+
 		std::string texturePath = "bunny.jpg";
 		std::string texturePath2 = "texture.jpg";
+
+
+		std::string texturePathText = "font_bitmap.png";
+		Texture* textureText = new Texture(allocator, device, commandPool, graphicsQueue, texturePathText, false);
+		textRenderer.addTexture(textureText);
+
+
+		renderer.vertexBufferText = textRenderer.vertexBuffer;
+		renderer.indexBufferText = textRenderer.indexBuffer;
+		renderer.descriptorSetsText = textRenderer.descriptorSets;
+		renderer.graphicsPipelineText = textRenderer.graphicsPipeline;
+		renderer.pipelineLayoutText = textRenderer.pipelineLayout;
+
+
+		
 		std::string texturePath3 = "viking_room.png";
 
 
-		Texture* texture = new Texture(allocator, device, commandPool, graphicsQueue, texturePath);
-		Texture* texture2 = new Texture(allocator, device, commandPool, graphicsQueue, texturePath2);
-		Texture* texture3 = new Texture(allocator, device, commandPool, graphicsQueue, texturePath3);
+		Texture* texture = new Texture(allocator, device, commandPool, graphicsQueue, texturePath, true);
+		Texture* texture2 = new Texture(allocator, device, commandPool, graphicsQueue, texturePath2, true);
+		Texture* texture3 = new Texture(allocator, device, commandPool, graphicsQueue, texturePath3, true);
 
 
 		renderer.addTexture(texture);
@@ -778,6 +887,219 @@ private:
 		vkDestroyShaderModule(device, fragShaderModule, nullptr);
 		vkDestroyShaderModule(device, vertShaderModule, nullptr);
 	}
+
+	void createGraphicsPipelineText() {
+		//SHADER CREATION
+
+		auto vertShaderCode = readFile("vertText.spv");
+		auto fragShaderCode = readFile("fragText.spv");
+
+		VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+		VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertShaderStageInfo.module = vertShaderModule;
+		vertShaderStageInfo.pName = "main";
+
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragShaderStageInfo.module = fragShaderModule;
+		fragShaderStageInfo.pName = "main";
+
+		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
+		// DYNAMIC STATES
+
+		std::vector<VkDynamicState> dynamicStates = {
+			VK_DYNAMIC_STATE_VIEWPORT,
+			VK_DYNAMIC_STATE_SCISSOR
+		};
+
+		VkPipelineDynamicStateCreateInfo dynamicState{};
+		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+		dynamicState.pDynamicStates = dynamicStates.data();
+
+		// VERTEX INPUT
+
+		VkVertexInputBindingDescription bindingDescription{};
+		bindingDescription.binding = 0;
+		bindingDescription.stride = sizeof(Vertex);
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		VkVertexInputAttributeDescription attributeDescription0{};
+		attributeDescription0.binding = 0;
+		attributeDescription0.location = 0;
+		attributeDescription0.format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescription0.offset = offsetof(Vertex, pos);
+
+		VkVertexInputAttributeDescription attributeDescription1{};
+		attributeDescription1.binding = 0;
+		attributeDescription1.location = 1;
+		attributeDescription1.format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescription1.offset = offsetof(Vertex, normal);
+
+		VkVertexInputAttributeDescription attributeDescription2{};
+		attributeDescription2.binding = 0;
+		attributeDescription2.location = 2;
+		attributeDescription2.format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescription2.offset = offsetof(Vertex, color);
+
+		VkVertexInputAttributeDescription attributeDescription3{};
+		attributeDescription3.binding = 0;
+		attributeDescription3.location = 3;
+		attributeDescription3.format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescription3.offset = offsetof(Vertex, texCoord);
+
+		VkVertexInputAttributeDescription attributeDescription4{};
+		attributeDescription4.binding = 0;
+		attributeDescription4.location = 4;
+		attributeDescription4.format = VK_FORMAT_R32_UINT;
+		attributeDescription4.offset = offsetof(Vertex, ID);
+
+		VkVertexInputAttributeDescription descriptions[] = { attributeDescription0 , attributeDescription1, attributeDescription2, attributeDescription3, attributeDescription4 };
+
+		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertexInputInfo.vertexBindingDescriptionCount = 1;
+		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription; // Optional
+		vertexInputInfo.vertexAttributeDescriptionCount = 5;
+		vertexInputInfo.pVertexAttributeDescriptions = descriptions; // Optional
+
+		// INPUT ASSEMBLY
+
+		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+		// VIEWPORT AND SCISSOR
+
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)swapChainExtent.width;
+		viewport.height = (float)swapChainExtent.height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = swapChainExtent;
+
+		VkPipelineViewportStateCreateInfo viewportState{};
+		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewportState.viewportCount = 1;
+		viewportState.pViewports = &viewport;
+		viewportState.scissorCount = 1;
+		viewportState.pScissors = &scissor;
+
+		// RASTERIZER
+
+		VkPipelineRasterizationStateCreateInfo rasterizer{};
+		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterizer.depthClampEnable = VK_FALSE;
+		rasterizer.rasterizerDiscardEnable = VK_FALSE;
+		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+		rasterizer.lineWidth = 1.0f;
+		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rasterizer.depthBiasEnable = VK_FALSE;
+		rasterizer.depthBiasConstantFactor = 0.0f; // Optional
+		rasterizer.depthBiasClamp = 0.0f; // Optional
+		rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
+
+		// DEPTH AND STENCIL
+
+		VkPipelineDepthStencilStateCreateInfo depthStencil{};
+		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencil.depthTestEnable = VK_TRUE;
+		depthStencil.depthWriteEnable = VK_TRUE;
+		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencil.depthBoundsTestEnable = VK_FALSE;
+		depthStencil.minDepthBounds = 0.0f; // Optional
+		depthStencil.maxDepthBounds = 1.0f; // Optional
+		depthStencil.stencilTestEnable = VK_FALSE;
+		depthStencil.front = {}; // Optional
+		depthStencil.back = {}; // Optional
+
+		// MULTISAMPLING
+		VkPipelineMultisampleStateCreateInfo multisampling{};
+		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisampling.sampleShadingEnable = VK_TRUE;
+		multisampling.minSampleShading = .2f;
+		multisampling.rasterizationSamples = msaaSamples;
+		multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
+		multisampling.alphaToOneEnable = VK_FALSE; // Optional
+
+		// COLOR BLENDING
+
+		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment.blendEnable = VK_TRUE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA; // Optional
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+
+		VkPipelineColorBlendStateCreateInfo colorBlending{};
+		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		colorBlending.logicOpEnable = VK_FALSE;
+		colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
+		colorBlending.attachmentCount = 1;
+		colorBlending.pAttachments = &colorBlendAttachment;
+		colorBlending.blendConstants[0] = 0.0f; // Optional
+		colorBlending.blendConstants[1] = 0.0f; // Optional
+		colorBlending.blendConstants[2] = 0.0f; // Optional
+		colorBlending.blendConstants[3] = 0.0f; // Optional
+
+		// PIPELINE LAYOUT
+
+		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayoutText;
+		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+
+		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayoutText) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create pipeline layout!");
+		}
+
+		VkGraphicsPipelineCreateInfo pipelineInfo{};
+		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipelineInfo.stageCount = 2;
+		pipelineInfo.pStages = shaderStages;
+		pipelineInfo.pVertexInputState = &vertexInputInfo;
+		pipelineInfo.pInputAssemblyState = &inputAssembly;
+		pipelineInfo.pViewportState = &viewportState;
+		pipelineInfo.pRasterizationState = &rasterizer;
+		pipelineInfo.pMultisampleState = &multisampling;
+		pipelineInfo.pDepthStencilState = &depthStencil;
+		pipelineInfo.pColorBlendState = &colorBlending;
+		pipelineInfo.pDynamicState = &dynamicState;
+		pipelineInfo.layout = pipelineLayoutText;
+		pipelineInfo.renderPass = renderPass;
+		pipelineInfo.subpass = 0;
+		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+		pipelineInfo.basePipelineIndex = -1; // Optional
+
+		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipelineText) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create graphics pipeline!");
+		}
+
+		// CLEANUP
+
+		vkDestroyShaderModule(device, fragShaderModule, nullptr);
+		vkDestroyShaderModule(device, vertShaderModule, nullptr);
+	}
+
+
 
 	void createFramebuffers() {
 		swapChainFramebuffers.resize(swapChainImageViews.size());
@@ -1754,6 +2076,10 @@ private:
 
 	VkPipelineLayout pipelineLayout;
 
+	VkPipeline graphicsPipelineText;
+
+	VkPipelineLayout pipelineLayoutText;
+
 	VkRenderPass renderPass;
 
 	// RENDER
@@ -1809,6 +2135,8 @@ private:
 
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorSetLayout descriptorSetLayoutText;
+
 	std::vector<VkDescriptorSet> descriptorSets;
 
 	// CAMERA

@@ -102,7 +102,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\talha\OneDrive\Belgeler\Visual Studio 2022\Libraries\stb-master;C:\Libraries\glfw-3.4.bin.WIN64\include;C:\VulkanSDK\1.3.290.0\Include;C:\VulkanSDK\1.3.290.0\Include;C:\Libraries\glfw-3.4.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -121,7 +121,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\talha\OneDrive\Belgeler\Visual Studio 2022\Libraries\stb-master;C:\Libraries\glfw-3.4.bin.WIN64\include;C:\VulkanSDK\1.3.290.0\Include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -140,15 +140,20 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Object.hpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="TextRenderer.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="vulkanEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader.frag" />
     <None Include="shader.vert" />
+    <None Include="shaderText.frag" />
+    <None Include="shaderText.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="RenderBatch.hpp" />
     <ClInclude Include="Renderer.hpp" />
+    <ClInclude Include="TextRenderer.hpp" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="tiny_obj_loader.h" />
     <ClInclude Include="Util.hpp" />

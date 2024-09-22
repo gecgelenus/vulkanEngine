@@ -1,8 +1,8 @@
 #pragma once
 
-#define VMA_IMPLEMENTATION
 #include "vulkan_mem_alloc.h"
-
+#include <string>
+#include <stdexcept>
 
 #include <vector>
 
@@ -10,7 +10,7 @@
 class Texture {
 
 public:
-	Texture(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue queue, std::string& path);
+	Texture(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue queue, std::string& path, bool flip);
 	~Texture();
 
 	VkImage getImage() { return textureImage; };

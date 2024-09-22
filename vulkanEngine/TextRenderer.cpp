@@ -1,11 +1,10 @@
-#include "Renderer.hpp"
+#include "TextRenderer.hpp"
 #include <iostream>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
-#include "Object.hpp"
 
-Renderer::Renderer()
+TextRenderer::TextRenderer()
 {
 	position = glm::vec3(5, 5, 5);
 	// horizontal angle : toward -Z
@@ -17,18 +16,13 @@ Renderer::Renderer()
 	mouseSpeed = 1.0f;
 }
 
-Renderer::~Renderer()
+TextRenderer::~TextRenderer()
 {
 	vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 	vkDestroyRenderPass(device, renderPass, nullptr);
 
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-		vkDestroyBuffer(device, objectPropertyBuffers[i], nullptr);
-		vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
-		vkFreeMemory(device, objectPropertyBuffersMemory[i], nullptr);
-	}
+	
 
 	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
@@ -42,11 +36,7 @@ Renderer::~Renderer()
 	vkDestroyBuffer(device, vertexBuffer, nullptr);
 	vkFreeMemory(device, vertexBufferMemory, nullptr);
 
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-		vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-		vkDestroyFence(device, inFlightFences[i], nullptr);
-	}
+	
 
 	vkDestroyCommandPool(device, commandPool, nullptr);
 
@@ -60,9 +50,8 @@ Renderer::~Renderer()
 	glfwTerminate();
 }
 
-void Renderer::drawFrame()
+void TextRenderer::drawFrame()
 {
-
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
@@ -85,7 +74,6 @@ void Renderer::drawFrame()
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
 	updateUniformBuffer(imageIndex);
-	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
 	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to submit draw command buffer!");
@@ -105,7 +93,7 @@ void Renderer::drawFrame()
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void Renderer::addObject(Object* obj)
+void TextRenderer::addObject(Object* obj)
 {
 	uint32_t offset = this->vertices.size();
 	obj->offset = offset;
@@ -179,7 +167,7 @@ void Renderer::addObject(Object* obj)
 	std::cout << "Object is added to renderer: " << obj->name << std::endl;
 }
 
-void Renderer::deleteObject(std::string& name)
+void TextRenderer::deleteObject(std::string& name)
 {
 	Object* obj = getObject(name);
 
@@ -188,7 +176,7 @@ void Renderer::deleteObject(std::string& name)
 	resetBuffers();
 }
 
-Object* Renderer::getObject(std::string& name)
+Object* TextRenderer::getObject(std::string& name)
 {
 	for (Object* obj : objects) {
 		if (obj->name == name) {
@@ -199,13 +187,13 @@ Object* Renderer::getObject(std::string& name)
 	return nullptr;
 }
 
-void Renderer::setObjectTexture(std::string& name, Texture* texture)
+void TextRenderer::setObjectTexture(std::string& name, Texture* texture)
 {
 	Object* obj = getObject(name);
 	obj->properties.textureID = texture->textureID;
 }
 
-void Renderer::readOBJ(std::string& path)
+void TextRenderer::readOBJ(std::string& path)
 {
 	tinyobj::ObjReaderConfig reader_config;
 	reader_config.mtl_search_path = "./"; // Path to material files
@@ -284,7 +272,7 @@ void Renderer::readOBJ(std::string& path)
 	}
 }
 
-void Renderer::createCommandPool()
+void TextRenderer::createCommandPool()
 {
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -296,7 +284,7 @@ void Renderer::createCommandPool()
 	}
 }
 
-void Renderer::createCommandBuffers()
+void TextRenderer::createCommandBuffers()
 {
 	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -311,23 +299,23 @@ void Renderer::createCommandBuffers()
 	}
 }
 
-void Renderer::createVertexBuffer()
+void TextRenderer::createVertexBuffer()
 {
-	VkDeviceSize bufferSize = STORAGE_MB * 500;
+	VkDeviceSize bufferSize = STORAGE_MB * 50;
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		vertexBuffer, vertexBufferMemory);
 }
 
-void Renderer::createIndexBuffer()
+void TextRenderer::createIndexBuffer()
 {
-	VkDeviceSize bufferSize = STORAGE_MB * 100;
+	VkDeviceSize bufferSize = STORAGE_MB * 10;
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 }
 
-void Renderer::createUniformBuffers()
+void TextRenderer::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
@@ -341,17 +329,7 @@ void Renderer::createUniformBuffers()
 		vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
 	}
 
-	bufferSize = sizeof(objectProperties) * OBJECT_COUNT;
-
-	objectPropertyBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-	objectPropertyBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-	objectPropertyBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, objectPropertyBuffers[i], objectPropertyBuffersMemory[i]);
-
-		vkMapMemory(device, objectPropertyBuffersMemory[i], 0, bufferSize, 0, &objectPropertyBuffersMapped[i]);
-	}
+	
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		VkDescriptorBufferInfo bufferInfo{};
@@ -359,10 +337,6 @@ void Renderer::createUniformBuffers()
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
-		VkDescriptorBufferInfo propertybufferInfo{};
-		propertybufferInfo.buffer = objectPropertyBuffers[i];
-		propertybufferInfo.offset = 0;
-		propertybufferInfo.range = sizeof(objectProperties) * OBJECT_COUNT;
 
 		VkDescriptorImageInfo samplerInfo{};
 		samplerInfo.sampler = textureSampler;
@@ -388,35 +362,24 @@ void Renderer::createUniformBuffers()
 		descriptorWriteSampler.pImageInfo = &samplerInfo;
 		descriptorWriteSampler.pTexelBufferView = nullptr; // Optional
 
-		VkWriteDescriptorSet descriptorWriteProperty{};
-		descriptorWriteProperty.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWriteProperty.dstSet = descriptorSets[i];
-		descriptorWriteProperty.dstBinding = 3;
-		descriptorWriteProperty.dstArrayElement = 0;
-		descriptorWriteProperty.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWriteProperty.descriptorCount = 1;
-		descriptorWriteProperty.pBufferInfo = &propertybufferInfo;
-		descriptorWriteProperty.pImageInfo = nullptr; // Optional
-		descriptorWriteProperty.pTexelBufferView = nullptr; // Optional
+		
 
-		VkWriteDescriptorSet sets[] = { descriptorWrite, descriptorWriteSampler, descriptorWriteProperty };
+		VkWriteDescriptorSet sets[] = { descriptorWrite, descriptorWriteSampler};
 
-		vkUpdateDescriptorSets(device, 3, sets, 0, nullptr);
+		vkUpdateDescriptorSets(device, 2, sets, 0, nullptr);
 	}
 }
 
-void Renderer::addTexture(Texture* texture)
+void TextRenderer::addTexture(Texture* texture)
 {
 	textures.push_back(texture);
 	texture->textureID = textureViews.size();
 	textureViews.push_back(texture->getImageView());
 
 	updateTextureDescriptors();
-
-
 }
 
-void Renderer::createDescriptorPool()
+void TextRenderer::createDescriptorPool()
 {
 	VkDescriptorPoolSize uniformPool{};
 	uniformPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -430,15 +393,12 @@ void Renderer::createDescriptorPool()
 	samplerPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	samplerPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-	VkDescriptorPoolSize objectPropertyPool{};
-	objectPropertyPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	objectPropertyPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-	VkDescriptorPoolSize sizes[] = { uniformPool, texturePool, samplerPool, objectPropertyPool };
+	
+	VkDescriptorPoolSize sizes[] = { uniformPool, texturePool, samplerPool};
 
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 4;
+	poolInfo.poolSizeCount = 3;
 	poolInfo.pPoolSizes = sizes;
 	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
@@ -447,7 +407,7 @@ void Renderer::createDescriptorPool()
 	}
 }
 
-void Renderer::createDescriptorSetLayout()
+void TextRenderer::createDescriptorSetLayout()
 {
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
 	uboLayoutBinding.binding = 0;
@@ -470,18 +430,12 @@ void Renderer::createDescriptorSetLayout()
 	textureBinding.pImmutableSamplers = nullptr;
 	textureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	VkDescriptorSetLayoutBinding objectPropertyBinding{};
-	objectPropertyBinding.binding = 3;
-	objectPropertyBinding.descriptorCount = 1;
-	objectPropertyBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	objectPropertyBinding.pImmutableSamplers = nullptr;
-	objectPropertyBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-	VkDescriptorSetLayoutBinding bindings[] = { uboLayoutBinding , samplerLayoutBinding, textureBinding, objectPropertyBinding };
+	
+	VkDescriptorSetLayoutBinding bindings[] = { uboLayoutBinding , samplerLayoutBinding, textureBinding};
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 4;
+	layoutInfo.bindingCount = 3;
 	layoutInfo.pBindings = bindings;
 
 	if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
@@ -489,7 +443,7 @@ void Renderer::createDescriptorSetLayout()
 	}
 }
 
-void Renderer::allocateDescriptorSets()
+void TextRenderer::allocateDescriptorSets()
 {
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
 
@@ -505,7 +459,7 @@ void Renderer::allocateDescriptorSets()
 	}
 }
 
-void Renderer::createTextureSampler()
+void TextRenderer::createTextureSampler()
 {
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(pDevice, &properties);
@@ -537,7 +491,7 @@ void Renderer::createTextureSampler()
 	}
 }
 
-void Renderer::updateUniformBuffer(uint32_t targetFrame)
+void TextRenderer::updateUniformBuffer(uint32_t targetFrame)
 {
 	std::vector<objectProperties> propertyArray(1000);
 
@@ -621,11 +575,10 @@ void Renderer::updateUniformBuffer(uint32_t targetFrame)
 
 	memcpy(uniformBuffersMapped[targetFrame], &ubo, sizeof(ubo));
 
-	memcpy(objectPropertyBuffersMapped[targetFrame], propertyArray.data(), sizeof(objectProperties) * OBJECT_COUNT);
-	memcpy(objectPropertyBuffersMapped[targetFrame], propertyArray.data(), sizeof(objectProperties)* OBJECT_COUNT);
+	
 }
 
-void Renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t index)
+void TextRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t index)
 {
 	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
 	VkClearValue depthColor{};
@@ -679,19 +632,6 @@ void Renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t index
 
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
-	VkBuffer vertexBuffersText[] = { vertexBufferText };
-
-
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelineText);
-
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffersText, offsets);
-
-	vkCmdBindIndexBuffer(commandBuffer, indexBufferText, 0, VK_INDEX_TYPE_UINT32);
-
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayoutText, 0, 1, &descriptorSetsText[currentFrame], 0, nullptr);
-
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(6), 1, 0, 0, 0);
-
 	vkCmdEndRenderPass(commandBuffer);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -699,7 +639,7 @@ void Renderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t index
 	}
 }
 
-void Renderer::createSyncObjects()
+void TextRenderer::createSyncObjects()
 {
 	imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 	renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -721,7 +661,7 @@ void Renderer::createSyncObjects()
 	}
 }
 
-void Renderer::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+void TextRenderer::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = size;
@@ -747,7 +687,7 @@ void Renderer::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemor
 	vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
-uint32_t Renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+uint32_t TextRenderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(pDevice, &memProperties);
 
@@ -760,7 +700,7 @@ uint32_t Renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags pro
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+void TextRenderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -796,7 +736,7 @@ void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize s
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-void Renderer::resetBuffers()
+void TextRenderer::resetBuffers()
 {
 	vertices.clear();
 	indices.clear();
@@ -859,7 +799,7 @@ void Renderer::resetBuffers()
 	}
 }
 
-void Renderer::updateTextureDescriptors()
+void TextRenderer::updateTextureDescriptors()
 {
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		std::vector<VkDescriptorImageInfo> descriptorInfos;
@@ -883,10 +823,10 @@ void Renderer::updateTextureDescriptors()
 		descriptorWriteTex.pTexelBufferView = nullptr; // Optional
 
 		vkUpdateDescriptorSets(device, 1, &descriptorWriteTex, 0, nullptr);
-	} 
+	}
 }
 
-void Renderer::deleteTexture(Texture* texture)
+void TextRenderer::deleteTexture(Texture* texture)
 {
 	//TODO
 }

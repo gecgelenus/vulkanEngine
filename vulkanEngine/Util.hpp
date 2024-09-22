@@ -4,6 +4,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #define OBJECT_COUNT 1000
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+#include <vector>
+#include <stdexcept>
 
 #define STORAGE_MB size_t(1048576)
 
@@ -22,4 +27,22 @@ struct objectProperties {
 	glm::uint textureID;
 	glm::uint normalMapID;
 
+};
+struct UniformBufferObject {
+	glm::mat4 model[1000];
+	glm::mat4 view;
+	glm::mat4 proj;
+
+};
+
+
+
+struct QueueFamilyIndices {
+	uint32_t graphicsFamily;
+};
+
+struct SwapChainSupportDetails {
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
 };

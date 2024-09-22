@@ -9,13 +9,10 @@ Object::Object(std::string name, std::vector<Vertex> vertices, std::vector<uint3
 	this->offset = 0;
 	this->properties = {};
 	this->position = glm::vec3(0.0f, 0.0f, 0.0f);
-
-
 }
 
 Object::~Object()
 {
-
 }
 
 void Object::setID(uint32_t id)

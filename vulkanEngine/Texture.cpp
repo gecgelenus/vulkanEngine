@@ -1,9 +1,12 @@
 #include "Texture.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <iostream>
 
+#define VMA_IMPLEMENTATION
+#include "vulkan_mem_alloc.h"
 
-Texture::Texture(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue queue,  std::string& path)
+Texture::Texture(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue queue, std::string& path, bool flip)
 {
 	this->allocator = allocator;
 	this->device = device;
@@ -11,14 +14,16 @@ Texture::Texture(VmaAllocator allocator, VkDevice device, VkCommandPool commandP
 	this->queue = queue;
 
 	int texWidth, texHeight, texChannels;
-	stbi_set_flip_vertically_on_load(true);
+	stbi_set_flip_vertically_on_load(flip);
 	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 	if (!pixels) {
 		throw std::runtime_error("failed to load texture image!");
 	}
-
+	else {
+		std::cout << "Texture: " << path << " Size: " << texWidth << "x" << texHeight << std::endl;
+	}
 
 	VkBuffer stagingBufferTexture;
 	VkDeviceMemory stagingBufferMemoryTexture;
@@ -44,7 +49,6 @@ Texture::Texture(VmaAllocator allocator, VkDevice device, VkCommandPool commandP
 
 	stbi_image_free(pixels);
 
-
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -59,7 +63,6 @@ Texture::Texture(VmaAllocator allocator, VkDevice device, VkCommandPool commandP
 	imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
 
 	VmaAllocationCreateInfo allocInfo = {};
 	allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
@@ -162,7 +165,6 @@ void Texture::transitionImageLayout(VkImage image, VkFormat format, VkImageLayou
 		1, &barrier
 	);
 
-
 	vkEndCommandBuffer(commandBuffer);
 
 	VkSubmitInfo submitInfo{};
@@ -174,14 +176,10 @@ void Texture::transitionImageLayout(VkImage image, VkFormat format, VkImageLayou
 	vkQueueWaitIdle(queue);
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-
-
 }
 
 void Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
-
-
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -234,6 +232,4 @@ void Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, 
 	vkQueueWaitIdle(queue);
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-
-
 }

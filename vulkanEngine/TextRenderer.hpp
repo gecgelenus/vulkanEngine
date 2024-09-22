@@ -3,25 +3,20 @@
 #include <GLFW/glfw3.h>
 
 
-#include "Texture.hpp"
+#include "Renderer.hpp"
 
 
 
 
 
-#include <vector>
-#include <stdexcept>
 
 
-#include "Util.hpp"
-#include "Object.hpp"
-
-class Renderer {
+class TextRenderer {
 public:
-	Renderer();
-	~Renderer();
+	TextRenderer();
+	~TextRenderer();
 
-	
+
 	void drawFrame();
 	void addObject(Object*);
 	void deleteObject(std::string& name);
@@ -97,7 +92,7 @@ public:
 	VkImageView textureImageView;
 	VkImageView bunnyImageView;
 
-	
+
 
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSetLayout descriptorSetLayout;
@@ -110,13 +105,6 @@ public:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 	UniformBufferObject ubo;
-
-	VkPipeline graphicsPipelineText;
-	std::vector<VkDescriptorSet> descriptorSetsText;
-	VkPipelineLayout pipelineLayoutText;
-	VkBuffer vertexBufferText;
-	VkBuffer indexBufferText;
-
 
 private:
 
