@@ -25,9 +25,16 @@ public:
 	void removeFromQueue(RenderBatchText* batchText);
 
 	void updateCommandBuffers();
+	
 
 	void drawFrame();
+	
 	void calculateViewVectors();
+	inline static bool stateUI;
+
+	static void processInputs(GLFWwindow* window, int key, int scancode, int action, int mods);
+	void checkCollisions();
+	
 
 	void createCommandPool();
 	void createCommandBuffers();
@@ -37,7 +44,6 @@ public:
 
 
 	InstanceVariables instance;
-
 
 private:
 

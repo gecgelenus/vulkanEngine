@@ -42,9 +42,7 @@ void RenderBatchText::addObject(ObjectText* obj)
 {
 	uint32_t offset = this->vertices.size();
 	obj->offset = offset;
-	obj->setID(objects.size());
-	obj->properties.objectID = objects.size();
-	std::cout << "ID: " << obj->getID() << std::endl;
+	
 
 	this->vertices.insert(this->vertices.end(), obj->vertices.begin(), obj->vertices.end());
 
@@ -438,9 +436,7 @@ void RenderBatchText::updateUniformBuffer(uint32_t targetFrame, glm::vec3& posit
 void RenderBatchText::setObjectTexture(std::string& name, Texture* texture)
 {
 	ObjectText* obj = getObject(name);
-	for (int i = 0; i < obj->vertices.size(); i++) {
-		obj->vertices[i].ID = texture->textureID;
-	}
+	obj->setID(texture->textureID);
 
 	resetBuffers();
 }
@@ -453,9 +449,6 @@ void RenderBatchText::resetBuffers()
 	for (int i = 0; i < objects.size(); i++) {
 		uint32_t offset = this->vertices.size();
 		objects[i]->offset = offset;
-		objects[i]->setID(i);
-		objects[i]->properties.objectID = i;
-		std::cout << "ID: " << objects[i]->getID() << std::endl;
 
 		this->vertices.insert(this->vertices.end(), objects[i]->vertices.begin(), objects[i]->vertices.end());
 

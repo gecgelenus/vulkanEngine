@@ -112,8 +112,8 @@
       "Flags": ["DEVICE_LOCAL"], 
       "Size": 224395264, 
       "Budget": {
-        "BudgetBytes": 220082176, 
-        "UsageBytes": 4313088
+        "BudgetBytes": 216576000, 
+        "UsageBytes": 7819264
       }, 
       "Stats": {
         "BlockCount": 0, 

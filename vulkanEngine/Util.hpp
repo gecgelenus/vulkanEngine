@@ -10,6 +10,9 @@
 #include <vector>
 #include <stdexcept>
 
+#define SCREEN_WIDTH 1600.0f
+#define SCREEN_HEIGHT 900.0f
+
 #define STORAGE_MB size_t(1048576)
 
 
@@ -41,6 +44,15 @@ struct Vertex {
 	glm::vec2 texCoord;
 	glm::uint32 ID;
 };
+
+struct CharInfo {
+	int id, x, y, width, height, xoffset, yoffset, xadvance;
+};
+
+struct Kerning {
+	int first, second, amount;
+};
+
 
 struct Vertex2D {
 	glm::vec2 pos;

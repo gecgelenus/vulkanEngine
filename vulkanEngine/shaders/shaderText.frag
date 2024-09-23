@@ -15,13 +15,11 @@ layout(location = 0) out vec4 outColor;
 void main() {
 
 
-	vec4 color = texture(sampler2D(texImage[textureID], texSampler), fragTexCoord);
+	
 
-	if(color.r < 0.5){
-		outColor = vec4(0.0, 0.0, 0.0, 0.0);
-	}else{
-		outColor = texture(sampler2D(texImage[textureID], texSampler), fragTexCoord);
-	}
+	
+	outColor = vec4(fragColor.r, fragColor.b, fragColor.g, texture(sampler2D(texImage[textureID], texSampler), fragTexCoord).a);
+	
 
 
 }

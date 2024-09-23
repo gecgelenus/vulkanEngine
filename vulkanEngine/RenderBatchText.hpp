@@ -23,8 +23,9 @@ public:
 	void setObjectTexture(std::string& name, Texture* texture);
 
 	UniformBufferObjectVP ubo;
-protected:
 	void resetBuffers();
+
+protected:
 	std::vector<Vertex2D> vertices;
 	std::vector<ObjectText*> objects;
 

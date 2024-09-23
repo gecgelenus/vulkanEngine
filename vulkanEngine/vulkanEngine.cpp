@@ -7,8 +7,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "stb_image_write.h"
-#define STB_TRUETYPE_IMPLEMENTATION 
-#include "stb_truetype.h" 
+
 
 
 #include <vulkan/vulkan.h>
@@ -25,11 +24,13 @@
 #include <limits>
 #include <algorithm>
 #include <fstream>
-
 #include "Renderer.hpp"
 #include "RenderQueue.hpp"
 #include "TextRenderer.hpp"
 #include "Texture.hpp"
+
+#include "Font.hpp"
+#include <sstream>
 
 
 
@@ -84,64 +85,50 @@ private:
 
 		
 
-		Vertex2D v1;
-		Vertex2D v2;
-		Vertex2D v3;
-		Vertex2D v4;
+		
 
-		v1.pos = glm::vec2(-0.02, 0.02);
-		v1.texCoord = glm::vec2(float(236.0f / 512.0f), float(51.0f / 512.0f));
+		std::ifstream t("fonts/sansa_32.fnt");
+		std::stringstream buffer;
+		buffer << t.rdbuf();
 
-		v2.pos = glm::vec2(0.02, 0.02);
-		v2.texCoord = glm::vec2(float(253.0f / 512.0f), float(51.0f / 512.0f));
+		FontData font;
+		font.parse(buffer.str());
 
-		v3.pos = glm::vec2(0.02, -0.02);
-		v3.texCoord = glm::vec2(float(253.0f / 512.0f), float(30.0f / 512.0f));
+		// Output parsed data
+		std::cout << "Font Face: " << font.face << "\n";
+		std::cout << "Font Size: " << font.size << "\n";
+		std::cout << "Number of Characters: " << font.chars.size() << "\n";
+		std::cout << "Number of Kernings: " << font.kernings.size() << "\n";
 
-		v4.pos = glm::vec2(-0.02, -0.02);
-		v4.texCoord = glm::vec2(float(236.0f / 512.0f), float(30.0f / 512.0f));
 
-		std::vector<Vertex2D> tmpVertices;
-		std::vector<uint32_t> tmpIndices;
+		std::string text = "Selamlar ismim ahmet talha";
+		std::string text2 = "Oldu gibi ha sen ne dersin?";
 
-		tmpVertices.push_back(v1);
-		tmpVertices.push_back(v2);
-		tmpVertices.push_back(v3);
-		tmpVertices.push_back(v4);
 
-		tmpIndices.push_back(uint32_t(3));
-		tmpIndices.push_back(uint32_t(0));
-		tmpIndices.push_back(uint32_t(1));
-		tmpIndices.push_back(uint32_t(2));
-		tmpIndices.push_back(uint32_t(3));
-		tmpIndices.push_back(uint32_t(1));
+		float xPos = 500;
+		float yPos = 500;
 
-		ObjectText* obj = new ObjectText("a", tmpVertices, tmpIndices);
+		
 
-		size_t size;
-		unsigned char* ttf_buffer;
-		unsigned char bitmap[512 * 512];  // Font atlas size 512x512
+		
 
-		FILE* fontFile = fopen("Roboto-Black.ttf", "rb");
-		fseek(fontFile, 0, SEEK_END);
-		size = ftell(fontFile); /* how long is the file ? */
-		fseek(fontFile, 0, SEEK_SET); /* reset */
 
-		ttf_buffer = (unsigned char*)malloc(size * sizeof(unsigned char));
+		ObjectText* obj = new ObjectText("a", font);
+		ObjectText* obj2 = new ObjectText("b", font);
 
-		fread(ttf_buffer, size, 1, fontFile);
-		fclose(fontFile);
-		// Initialize the font and bake it to a bitmap
-		stbtt_bakedchar cdata[96]; // ASCII 32..126 is 96 glyphs	
-		stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, bitmap, 512, 512, 32, 96, cdata);
-		stbi_write_png("font_bitmap.png", 512, 512, 1, bitmap, 512);
 
+		obj->setText(text, xPos, yPos);
+		obj2->setText(text2, xPos, yPos-40);
+		obj2->setColor(glm::vec3(1.0f, 0.0f, 0.0f));
+
+
+		
 
 		std::string texturePath = "bunny.jpg";
 		std::string texturePath2 = "texture.jpg";
 		std::string texturePath3 = "viking_room.png";
 
-		std::string texturePathText = "font_bitmap.png";
+		std::string texturePathText = "fonts/sansa_32_0.png";
 
 		Texture* textureText = new Texture(allocator, device, commandPool, graphicsQueue, texturePathText, false);
 
@@ -151,7 +138,7 @@ private:
 
 
 
-
+	
 
 
 		std::string path = "monkeys.obj";
@@ -167,7 +154,7 @@ private:
 		std::string batchName = "a";
 		std::string batchNameText = "TEXTBATCH";
 
-		RenderBatch* batch = new RenderBatch(batchName, vars, "vert.spv", "frag.spv");
+		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vert.spv", "shaders/frag.spv");
 		batch->readOBJ(path2);
 		batch->addTexture(texture3);
 		batch->addTexture(texture2);
@@ -178,11 +165,14 @@ private:
 		batch->setObjectTexture(objName2, texture);
 
 
-		RenderBatchText* batchText = new RenderBatchText(batchName, vars, "vertText.spv", "fragText.spv");
+		RenderBatchText* batchText = new RenderBatchText(batchName, vars, "shaders/vertText.spv", "shaders/fragText.spv");
 		batchText->addObject(obj);
+		batchText->addObject(obj2);
+
 		batchText->addTexture(textureText);
 		batchText->setObjectTexture(obj->name, textureText);
-
+		batchText->setObjectTexture(obj2->name, textureText);
+		batchText->resetBuffers();
 		renderQueue.pushToQueue(batch);
 
 		renderQueue.pushToQueue(batchText);
@@ -278,6 +268,56 @@ private:
 		
 
 	}
+
+	// Function to generate vertices from text, mapped to Vulkan's NDC system
+	std::vector<Vertex2D> generateTextVertices(const std::string& text, float x, float y, float scale, stbtt_bakedchar* cdata, float screen_width, float screen_height, glm::vec3 color = glm::vec3(1.0f)) {
+		std::vector<Vertex2D> vertices;
+		float startX = x; // Keep the starting X position to reset for new lines
+
+		for (char ch : text) {
+			if (ch == '\n') {  // Newline handling
+				x = startX;
+				y += scale * 20.0f;  // Move down by 20 units (adjust to your line spacing)
+				continue;
+			}
+
+			// Get the baked character data
+			stbtt_bakedchar& bchar = cdata[ch - 32]; // Assume ASCII 32..126 range
+
+			// Calculate the quad position in pixel space
+			float xpos = x + bchar.xoff * scale;
+			float ypos = y + bchar.yoff * scale;
+			float w = (bchar.x1 - bchar.x0) * scale; // Width of the glyph
+			float h = (bchar.y1 - bchar.y0) * scale; // Height of the glyph
+
+			// Convert pixel coordinates to Vulkan's NDC system
+			float ndc_xpos = (2.0f * (xpos / screen_width)) - 1.0f;
+			float ndc_ypos = 1.0f - (2.0f * (ypos / screen_height));
+			float ndc_xpos_w = (2.0f * ((xpos + w) / screen_width)) - 1.0f;
+			float ndc_ypos_h = 1.0f - (2.0f * ((ypos + h) / screen_height));
+
+			// Texture coordinates
+			float u0 = bchar.x0 / 512.0f; // Assuming a 512x512 atlas size (adjust as needed)
+			float v0 = bchar.y0 / 512.0f;
+			float u1 = bchar.x1 / 512.0f;
+			float v1 = bchar.y1 / 512.0f;
+
+			// Create two triangles (6 vertices) for the quad in NDC space
+			vertices.push_back(Vertex2D{ {ndc_xpos,     ndc_ypos},     color, {u0, v0}, (uint32_t)ch });
+			vertices.push_back(Vertex2D{ {ndc_xpos_w,   ndc_ypos},     color, {u1, v0}, (uint32_t)ch });
+			vertices.push_back(Vertex2D{ {ndc_xpos_w,   ndc_ypos_h},   color, {u1, v1}, (uint32_t)ch });
+
+			vertices.push_back(Vertex2D{ {ndc_xpos,     ndc_ypos},     color, {u0, v0}, (uint32_t)ch });
+			vertices.push_back(Vertex2D{ {ndc_xpos_w,   ndc_ypos_h},   color, {u1, v1}, (uint32_t)ch });
+			vertices.push_back(Vertex2D{ {ndc_xpos,     ndc_ypos_h},   color, {u0, v1}, (uint32_t)ch });
+
+			// Advance the cursor for the next character
+			x += bchar.xadvance * scale;
+		}
+
+		return vertices;
+	}
+
 
 	void cleanup() {
 

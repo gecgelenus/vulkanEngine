@@ -5,6 +5,8 @@
 RenderQueue::RenderQueue(InstanceVariables& vars)
 {
 	this->instance = vars;
+	this->stateUI = false;
+
 
 	position = glm::vec3(5, 5, 5);
 	// horizontal angle : toward -Z
@@ -18,6 +20,7 @@ RenderQueue::RenderQueue(InstanceVariables& vars)
 	createCommandPool();
 	createCommandBuffers();
 	createSyncObjects();
+	glfwSetKeyCallback(instance.window, RenderQueue::processInputs);
 
 }
 
@@ -73,7 +76,6 @@ void RenderQueue::removeFromQueue(RenderBatchText* batchText)
 	}
 
 	std::cout << "Render queue -> Tried to delete a batch (text) but it is not exists.: " << batchText->name << std::endl;
-
 }
 
 void RenderQueue::updateCommandBuffers()
@@ -107,14 +109,18 @@ void RenderQueue::drawFrame()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	calculateViewVectors();
+
+	if (!stateUI) {
+		calculateViewVectors();
+	}
 	for (RenderBatch* b : batchList) {
 		b->updateUniformBuffer(imageIndex, position, direction, up);
 	}
-	for (RenderBatchText* b : batchListText) {
-		b->updateUniformBuffer(imageIndex, position, direction, up);
+	if (stateUI) {
+		for (RenderBatchText* b : batchListText) {
+			b->updateUniformBuffer(imageIndex, position, direction, up);
+		}
 	}
-
 	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
 	if (vkQueueSubmit(instance.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
@@ -202,8 +208,32 @@ void RenderQueue::calculateViewVectors()
 	}
 	// Terminate program
 	if (glfwGetKey(instance.window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		glfwSetWindowShouldClose(instance.window, true);
+		stateUI = true;
+
 	}
+}
+
+void RenderQueue::processInputs(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		if (stateUI) {
+			stateUI = false;
+			glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			glfwSetCursorPos(window, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+		}
+		else {
+			stateUI = true;
+			glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_FALSE);
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+	}
+}
+
+void RenderQueue::checkCollisions()
+{
+
+
 }
 
 void RenderQueue::createCommandPool()
@@ -296,27 +326,28 @@ void RenderQueue::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t in
 		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(batchList[i]->indices.size()), 1, 0, 0, 0);
 
 	}
+	if (stateUI) {
+		for (int i = 0; i < batchListText.size(); i++) {
 
-	for (int i = 0; i < batchListText.size(); i++) {
-
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchListText[i]->graphicsPipeline);
-
-
-		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchListText[i]->graphicsPipeline);
 
 
-		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-		VkBuffer vertexBuffers[] = { batchListText[i]->vertexBuffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-		vkCmdBindIndexBuffer(commandBuffer, batchListText[i]->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchListText[i]->pipelineLayout, 0, 1, &(batchListText[i]->descriptorSets[currentFrame]), 0, nullptr);
+			VkBuffer vertexBuffers[] = { batchListText[i]->vertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(batchListText[i]->indices.size()), 1, 0, 0, 0);
+			vkCmdBindIndexBuffer(commandBuffer, batchListText[i]->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchListText[i]->pipelineLayout, 0, 1, &(batchListText[i]->descriptorSets[currentFrame]), 0, nullptr);
+
+			vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(batchListText[i]->indices.size()), 1, 0, 0, 0);
+
+		}
 	}
 
 	vkCmdEndRenderPass(commandBuffer);
