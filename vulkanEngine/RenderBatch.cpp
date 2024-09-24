@@ -170,6 +170,8 @@ void RenderBatch::setAmbientLight(const glm::vec4& ambient)
 
 void RenderBatch::readOBJ(std::string& path)
 {
+
+
 	tinyobj::ObjReaderConfig reader_config;
 	reader_config.mtl_search_path = "./"; // Path to material files
 
