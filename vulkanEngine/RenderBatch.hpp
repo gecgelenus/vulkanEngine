@@ -51,6 +51,7 @@ public:
 	VkInstance instance;
 	VkDevice device;
 	VkPhysicalDevice pDevice;
+	VmaAllocator allocator;
 
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
@@ -82,15 +83,15 @@ public:
 	std::vector<uint32_t> indices;
 
 	std::vector<VkBuffer> uniformBuffers;
-	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	std::vector<VmaAllocation> uniformBuffersAllocation;
 	std::vector<void*> uniformBuffersMapped;
 
 	std::vector<VkBuffer> lightBuffers;
-	std::vector<VkDeviceMemory> lightBuffersMemory;
+	std::vector<VmaAllocation> lightBuffersAllocation;
 	std::vector<void*> lightBuffersMapped;
 
 	std::vector<VkBuffer> objectPropertyBuffers;
-	std::vector<VkDeviceMemory> objectPropertyBuffersMemory;
+	std::vector<VmaAllocation> objectPropertyBuffersAllocation;
 	std::vector<void*> objectPropertyBuffersMapped;
 
 
@@ -122,7 +123,12 @@ public:
 
 protected:
 
-	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	VmaAllocation vertexBufferAllocation;
+	VmaAllocation indexBufferAllocation;
+
+
+
+	VmaAllocationInfo createBuffer(VkDeviceSize size, int memoryType, VkBufferUsageFlags usage, VkBuffer& buffer, VmaAllocation& allocation);
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 

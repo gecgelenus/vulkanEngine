@@ -7,7 +7,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "stb_image_write.h"
-
+#include <math.h>
 
 
 #include <vulkan/vulkan.h>
@@ -82,6 +82,7 @@ private:
 		vars.renderpass = renderPass;
 		vars.WIDTH = WIDTH;
 		vars.HEIGHT = HEIGHT;
+		vars.allocator = allocator;
 
 		
 
@@ -135,25 +136,28 @@ private:
 		std::string batchNameText = "TEXTBATCH";
 
 		Light* l1 = new Light();
-		l1->position = glm::vec4(1.0, 1.0, 1.0, 1.0);
+		l1->position = glm::vec4(1.0, 3.0, 1.0, 1.0);
 		l1->color = glm::vec4(1.0, 0.0, 1.0, 0.7);
 
 		Light* l2 = new Light();
-		l2->position = glm::vec4(-1.0, 1.0, -1.0, 1.0);
+		l2->position = glm::vec4(-1.0, 3.0, -1.0, 1.0);
 		l2->color = glm::vec4(0.0, 1.0, 0.0, 0.7);
 
 		Light* l3 = new Light();
-		l3->position = glm::vec4(1.0, 1.0, -1.0, 1.0);
+		l3->position = glm::vec4(1.0, 3, -1.0, 1.0);
 		l3->color = glm::vec4(0.0, 1.0, 1.0, 0.7);
 
 		Light* l4 = new Light();
-		l4->position = glm::vec4(-1.0, 1.0, 1.0, 1.0);
+		l4->position = glm::vec4(-1.0, 3, 0.0, 1.0);
 		l4->color = glm::vec4(1.0, 0.0, 0.0, 0.7);
 
 		Object* sphere1 = new Object("sphere1", "models/sphere.obj");
 		Object* sphere2 = new Object("sphere2", "models/sphere.obj");
 		Object* sphere3 = new Object("sphere3", "models/sphere.obj");
 		Object* sphere4 = new Object("sphere4", "models/sphere.obj");
+		Object* car = new Object("car", "models/BMW27.obj");
+		car->setColor(glm::vec3(1.0f));
+		
 
 		sphere1->position = l1->position;
 		sphere2->position = l2->position;
@@ -169,15 +173,12 @@ private:
 
 
 		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vertFlat.spv", "shaders/fragFlat.spv");
-		batch->readOBJ("models/vase_scene.obj");
 		batch->addObject(sphere1);
 		batch->addObject(sphere2);
 		batch->addObject(sphere3);
 		batch->addObject(sphere4);
+		batch->addObject(car);
 
-
-		batch->getObject("vase")->setColor(glm::vec3(1.0f, 1.0f, 1.0f));
-		batch->getObject("surface")->setColor(glm::vec3(1.0f, 1.0f, 1.0f));
 
 		
 
@@ -204,30 +205,21 @@ private:
 		
 
 
+		saveStats(allocator);
 
 
 
 
 
 
-
-		char* statsString;
-
-		// Get the stats string
-		vmaBuildStatsString(allocator, &statsString, VK_TRUE);  // VK_TRUE for detailed statistics
-
-		std::fstream file;
-		file.open("stats.txt");
-		std::string stats(statsString);
-
-		file.write(stats.data(), stats.length());
-		file.close();
-
-		// Free the allocated string by VMA
-		vmaFreeStatsString(allocator, statsString);
+		
 
 		
 		while (!glfwWindowShouldClose(window)) {
+
+
+
+
 			renderQueue.drawFrame();
 			glfwPollEvents();
 		}
@@ -292,54 +284,6 @@ private:
 
 	}
 
-	// Function to generate vertices from text, mapped to Vulkan's NDC system
-	std::vector<Vertex2D> generateTextVertices(const std::string& text, float x, float y, float scale, stbtt_bakedchar* cdata, float screen_width, float screen_height, glm::vec3 color = glm::vec3(1.0f)) {
-		std::vector<Vertex2D> vertices;
-		float startX = x; // Keep the starting X position to reset for new lines
-
-		for (char ch : text) {
-			if (ch == '\n') {  // Newline handling
-				x = startX;
-				y += scale * 20.0f;  // Move down by 20 units (adjust to your line spacing)
-				continue;
-			}
-
-			// Get the baked character data
-			stbtt_bakedchar& bchar = cdata[ch - 32]; // Assume ASCII 32..126 range
-
-			// Calculate the quad position in pixel space
-			float xpos = x + bchar.xoff * scale;
-			float ypos = y + bchar.yoff * scale;
-			float w = (bchar.x1 - bchar.x0) * scale; // Width of the glyph
-			float h = (bchar.y1 - bchar.y0) * scale; // Height of the glyph
-
-			// Convert pixel coordinates to Vulkan's NDC system
-			float ndc_xpos = (2.0f * (xpos / screen_width)) - 1.0f;
-			float ndc_ypos = 1.0f - (2.0f * (ypos / screen_height));
-			float ndc_xpos_w = (2.0f * ((xpos + w) / screen_width)) - 1.0f;
-			float ndc_ypos_h = 1.0f - (2.0f * ((ypos + h) / screen_height));
-
-			// Texture coordinates
-			float u0 = bchar.x0 / 512.0f; // Assuming a 512x512 atlas size (adjust as needed)
-			float v0 = bchar.y0 / 512.0f;
-			float u1 = bchar.x1 / 512.0f;
-			float v1 = bchar.y1 / 512.0f;
-
-			// Create two triangles (6 vertices) for the quad in NDC space
-			vertices.push_back(Vertex2D{ {ndc_xpos,     ndc_ypos},     color, {u0, v0}, (uint32_t)ch });
-			vertices.push_back(Vertex2D{ {ndc_xpos_w,   ndc_ypos},     color, {u1, v0}, (uint32_t)ch });
-			vertices.push_back(Vertex2D{ {ndc_xpos_w,   ndc_ypos_h},   color, {u1, v1}, (uint32_t)ch });
-
-			vertices.push_back(Vertex2D{ {ndc_xpos,     ndc_ypos},     color, {u0, v0}, (uint32_t)ch });
-			vertices.push_back(Vertex2D{ {ndc_xpos_w,   ndc_ypos_h},   color, {u1, v1}, (uint32_t)ch });
-			vertices.push_back(Vertex2D{ {ndc_xpos,     ndc_ypos_h},   color, {u0, v1}, (uint32_t)ch });
-
-			// Advance the cursor for the next character
-			x += bchar.xadvance * scale;
-		}
-
-		return vertices;
-	}
 
 
 	void cleanup() {
@@ -759,7 +703,24 @@ private:
 		return details;
 	}
 
-	
+	void saveStats(VmaAllocator allocator) {
+		char* statsString;
+
+		// Get the stats string
+		vmaBuildStatsString(allocator, &statsString, VK_TRUE);  // VK_TRUE for detailed statistics
+
+		std::cout << statsString << std::endl;
+
+		std::fstream file;
+		file.open("stats.txt");
+		std::string stats(statsString);
+
+		file.write(stats.data(), stats.length());
+		file.close();
+
+		// Free the allocated string by VMA
+		vmaFreeStatsString(allocator, statsString);
+	}
 
 	
 

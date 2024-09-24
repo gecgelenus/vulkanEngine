@@ -1,6 +1,7 @@
 #include "RenderBatchText.hpp"
 #include <iostream>
-
+#define VMA_IMPLEMENTATION
+#include "vulkan_mem_alloc.h"
 
 RenderBatchText::RenderBatchText()
 {
@@ -25,6 +26,7 @@ RenderBatchText::RenderBatchText(std::string& name, InstanceVariables& vars, con
 	this->renderPass = vars.renderpass;
 	this->vertexPath = vertexPath;
 	this->fragmentPath = fragmentPath;
+	this->allocator = vars.allocator;
 
 	createCommandPool();
 	createCommandBuffers();
@@ -56,41 +58,39 @@ void RenderBatchText::addObject(ObjectText* obj)
 
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VmaAllocation stagingBufferAllocation;
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
+	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
 
 	void* data;
-	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	vmaMapMemory(allocator, stagingBufferAllocation, &data);
 	memcpy(data, vertices.data(), (size_t)bufferSize);
-	vkUnmapMemory(device, stagingBufferMemory);
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
 
 	copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
-	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
+	vmaFreeMemory(allocator, stagingBufferAllocation);
 
 	// INDEX
 
 	bufferSize = sizeof(indices[0]) * indices.size();
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
-	void* data2;
+	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
 
-	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data2);
+	void* data2;
+	vmaMapMemory(allocator, stagingBufferAllocation, &data2);
 	memcpy(data2, indices.data(), (size_t)bufferSize);
-	vkUnmapMemory(device, stagingBufferMemory);
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
 
 	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
-	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
-
-
+	vmaFreeMemory(allocator, stagingBufferAllocation);
 
 	std::cout << "Object is added to render batch (text): " << obj->name << std::endl;
 
@@ -319,17 +319,19 @@ void RenderBatchText::createVertexBuffer()
 {
 	VkDeviceSize bufferSize = STORAGE_MB * 50;
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		vertexBuffer, vertexBufferMemory);
+	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		vertexBuffer, vertexBufferAllocation);
 }
 
 void RenderBatchText::createIndexBuffer()
 {
 	VkDeviceSize bufferSize = STORAGE_MB * 10;
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
+	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		indexBuffer, indexBufferAllocation);
 }
 
 void RenderBatchText::createUniformBuffers()
@@ -338,13 +340,18 @@ void RenderBatchText::createUniformBuffers()
 	VkDeviceSize bufferSize = sizeof(UniformBufferObjectVP);
 
 	uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-	uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+	uniformBuffersAllocation.resize(MAX_FRAMES_IN_FLIGHT);
 	uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
 
-		vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
+
+		VmaAllocationInfo info = createBuffer(bufferSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+			VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+			VMA_ALLOCATION_CREATE_MAPPED_BIT,
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, uniformBuffers[i], uniformBuffersAllocation[i]);
+
+		uniformBuffersMapped[i] = info.pMappedData;
 	}
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -508,37 +515,37 @@ void RenderBatchText::resetBuffers()
 
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VmaAllocation stagingBufferAllocation;
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
+	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
 
 	void* data;
-	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	vmaMapMemory(allocator, stagingBufferAllocation, &data);
 	memcpy(data, vertices.data(), (size_t)bufferSize);
-	vkUnmapMemory(device, stagingBufferMemory);
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
 
 	copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
-	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
+	vmaFreeMemory(allocator, stagingBufferAllocation);
 
 	// INDEX
 
 	bufferSize = sizeof(indices[0]) * indices.size();
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
-	void* data2;
+	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
 
-	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data2);
+	void* data2;
+	vmaMapMemory(allocator, stagingBufferAllocation, &data2);
 	memcpy(data2, indices.data(), (size_t)bufferSize);
-	vkUnmapMemory(device, stagingBufferMemory);
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
 
 	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
-	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
+	vmaFreeMemory(allocator, stagingBufferAllocation);
 }

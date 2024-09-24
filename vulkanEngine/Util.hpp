@@ -6,6 +6,7 @@
 #define OBJECT_COUNT 1000
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include "vulkan_mem_alloc.h"
 
 #include <vector>
 #include <stdexcept>
@@ -22,6 +23,7 @@ struct InstanceVariables {
 
 	VkInstance instance;
 	VkPhysicalDevice physicalDevice;
+	VmaAllocator allocator;
 	VkDevice device;
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
