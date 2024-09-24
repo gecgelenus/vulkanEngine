@@ -649,6 +649,7 @@ void RenderBatch::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position,
 {
 
 	std::vector<objectProperties> propertyArray(1000);
+	lbo.cameraPos = glm::vec4(position, 1.0f);
 
 
 	for (Object* obj : objects) {
@@ -673,7 +674,6 @@ void RenderBatch::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position,
 void RenderBatch::updateLightBuffer(uint32_t targetFrame)
 {
 	lbo.lightCount = lights.size();
-
 
 	for (int i = 0; i < lbo.lightCount; i++) {
 		lbo.lightPosArr[i] = lights[i]->position;

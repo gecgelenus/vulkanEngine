@@ -83,6 +83,7 @@ struct LightBufferObject {
 	glm::vec4 lightPosArr[MAX_LIGHT_COUNT];
 	glm::vec4 lightColorArr[MAX_LIGHT_COUNT];
 	glm::vec4 ambientLight;
+	glm::vec4 cameraPos;
 	glm::uint32 lightCount;
 };
 

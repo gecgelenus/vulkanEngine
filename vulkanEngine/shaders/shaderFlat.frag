@@ -8,6 +8,7 @@ layout(set = 1, binding = 0) uniform LightBufferObject{
     vec4 lightPos[100];
     vec4 lightColor[100];
     vec4 ambientLight;
+    vec4 cameraPos;
     uint count;
 } lbo;
 
@@ -29,8 +30,12 @@ layout(location = 0) out vec4 outColor;
 void main() {
 
     vec3 surfaceNormal = normalize(fragNormal);
+    
     vec3 diffuseLight = lbo.ambientLight.xyz * lbo.ambientLight.a;
 
+    vec3 specularLight = vec3(0.0f);
+
+    vec3 viewDir = normalize(lbo.cameraPos.xyz - fragPos);
 
 
     for(int i = 0; i < lbo.count; i++){
@@ -42,10 +47,23 @@ void main() {
         
         vec3 lightColor = attenuation * (lbo.lightColor[i].xyz * lbo.lightColor[i].a);
         
-        vec3 diff = lightColor * max(dot(fragNormal, normalize(lightDir)), 0);
+        lightDir = normalize(lightDir);
+
+        vec3 diff = lightColor * max(dot(fragNormal, lightDir), 0);
         diffuseLight += diff;
+
+
+
+        vec3 halfAngle = normalize(lightDir + viewDir);
+        float specAngle = dot(surfaceNormal, halfAngle);
+        specAngle = clamp(specAngle, 0, 1);
+        float specular = pow(specAngle, 32.0);
+
+
+        specularLight += specular * lightColor;
+
     }
 
-    outColor =  vec4(fragColor * diffuseLight, 1.0);
+    outColor =  vec4(fragColor * diffuseLight + specularLight * fragColor, 1.0);
 
 }
