@@ -46,13 +46,13 @@ void ObjectText::setColor(glm::vec3 color)
 }
 
 
-void ObjectText::setText(std::string& text, float xPos, float yPos)
+void ObjectText::setText(std::string& text, float xPosP, float yPosP)
 {
-	vertices.clear();
-	indices.clear();
+	this->vertices.clear();
+	this->indices.clear();
 	
-	this->xPos = xPos;
-	this->yPos = yPos;
+	this->xPos = xPosP;
+	this->yPos = SCREEN_HEIGHT - yPosP;
 	this->text = text;
 
 	float xOffset = 0;
@@ -82,7 +82,6 @@ void ObjectText::setText(std::string& text, float xPos, float yPos)
 			}
 			else if (k.first == prev && k.second == currentChar.id) {
 				xOffset += k.amount;
-				std::cout << prev << " " << currentChar.id << " " << k.amount << std::endl;
 				break;
 
 			}
@@ -97,7 +96,6 @@ void ObjectText::setText(std::string& text, float xPos, float yPos)
 
 
 
-		std::cout << char(currentChar.id) << std::endl;
 
 		v1.pos.x = 2.0f * (x0 / 1600) - 1.0f;
 		v1.pos.y = 1.0f - 2.0f * (y0 / 900);
@@ -123,17 +121,17 @@ void ObjectText::setText(std::string& text, float xPos, float yPos)
 		v4.texCoord.y = (currentChar.y + currentChar.height) / font.scale;
 		v4.color = color;
 
-		vertices.push_back(v1);
-		vertices.push_back(v2);
-		vertices.push_back(v3);
-		vertices.push_back(v4);
+		this->vertices.push_back(v1);
+		this->vertices.push_back(v2);
+		this->vertices.push_back(v3);
+		this->vertices.push_back(v4);
 
-		indices.push_back(uint32_t(0 + indexOffset));
-		indices.push_back(uint32_t(3 + indexOffset));
-		indices.push_back(uint32_t(2 + indexOffset));
-		indices.push_back(uint32_t(1 + indexOffset));
-		indices.push_back(uint32_t(0 + indexOffset));
-		indices.push_back(uint32_t(2 + indexOffset));
+		this->indices.push_back(uint32_t(0 + indexOffset));
+		this->indices.push_back(uint32_t(3 + indexOffset));
+		this->indices.push_back(uint32_t(2 + indexOffset));
+		this->indices.push_back(uint32_t(1 + indexOffset));
+		this->indices.push_back(uint32_t(0 + indexOffset));
+		this->indices.push_back(uint32_t(2 + indexOffset));
 
 
 		xOffset += currentChar.xadvance;
@@ -179,7 +177,6 @@ void ObjectText::setText(std::string& text)
 			}
 			else if (k.first == prev && k.second == currentChar.id) {
 				xOffset += k.amount;
-				std::cout << prev << " " << currentChar.id << " " << k.amount << std::endl;
 				break;
 
 			}
@@ -194,7 +191,6 @@ void ObjectText::setText(std::string& text)
 
 
 
-		std::cout << char(currentChar.id) << std::endl;
 
 		v1.pos.x = 2.0f * (x0 / 1600) - 1.0f;
 		v1.pos.y = 1.0f - 2.0f * (y0 / 900);
@@ -240,13 +236,13 @@ void ObjectText::setText(std::string& text)
 
 }
 
-void ObjectText::setPosition(float xPos, float yPos)
+void ObjectText::setPosition(float xPosP, float yPosP)
 {
 	vertices.clear();
 	indices.clear();
 
-	this->xPos = xPos;
-	this->yPos = yPos;
+	this->xPos = xPosP;
+	this->yPos = SCREEN_HEIGHT - yPosP;
 
 	float xOffset = 0;
 	int indexOffset = 0;
@@ -290,7 +286,6 @@ void ObjectText::setPosition(float xPos, float yPos)
 
 
 
-		std::cout << char(currentChar.id) << std::endl;
 
 		v1.pos.x = 2.0f * (x0 / 1600) - 1.0f;
 		v1.pos.y = 1.0f - 2.0f * (y0 / 900);
@@ -335,7 +330,7 @@ void ObjectText::setPosition(float xPos, float yPos)
 	}
 }
 
-void ObjectText::generateTextVertices(const std::string& text, float xPos, float yPos, float scale, FontData& font, glm::vec3 color)
+void ObjectText::generateTextVertices(const std::string& text, float xPosP, float yPosP, float scale, FontData& font, glm::vec3 color)
 {
 
 	vertices.clear();
@@ -376,14 +371,13 @@ void ObjectText::generateTextVertices(const std::string& text, float xPos, float
 
 
 		float x0 = xOffset + xPos;
-		float y0 = yPos;
+		float y0 = SCREEN_HEIGHT - yPosP;
 
 		float x1 = xOffset + xPos + currentChar.width;
-		float y1 = yPos - currentChar.height - currentChar.yoffset;
+		float y1 = SCREEN_HEIGHT - yPosP - currentChar.height - currentChar.yoffset;
 
 
 
-		std::cout << char(currentChar.id) << std::endl;
 
 		v1.pos.x = 2.0f * (x0 / 1600) - 1.0f;
 		v1.pos.y = 1.0f - 2.0f * (y0 / 900);

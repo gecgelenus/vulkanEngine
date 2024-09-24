@@ -421,6 +421,53 @@ void RenderBatchText::createDescriptorSetLayout()
 
 }
 
+void RenderBatchText::allocateDescriptorSets()
+{
+	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+
+
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	allocInfo.pSetLayouts = layouts.data();
+
+	descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+	if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate descriptor sets!");
+	}
+}
+
+void RenderBatchText::createDescriptorPool()
+{
+	VkDescriptorPoolSize uniformPool{};
+	uniformPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uniformPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+
+
+	VkDescriptorPoolSize texturePool{};
+	texturePool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	texturePool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+	VkDescriptorPoolSize samplerPool{};
+	samplerPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	samplerPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+
+	VkDescriptorPoolSize sizes[] = { uniformPool, texturePool, samplerPool, };
+
+	VkDescriptorPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = 3;
+	poolInfo.pPoolSizes = sizes;
+	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * 2);
+
+	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor pool!");
+	}
+}
+
 void RenderBatchText::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up)
 {
 	

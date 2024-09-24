@@ -102,6 +102,13 @@ void RenderBatch::addObject(Object* obj)
 	std::cout << "Object is added to render batch: " << obj->name << std::endl;
 }
 
+void RenderBatch::addLight(Light* light)
+{
+	light->ID = lights.size();
+
+	lights.push_back(light);
+}
+
 void RenderBatch::deleteObject(std::string& name)
 {
 	Object* obj = getObject(name);
@@ -111,7 +118,30 @@ void RenderBatch::deleteObject(std::string& name)
 	resetBuffers();
 }
 
+void RenderBatch::deleteLight(uint32_t ID)
+{
+	for (int i = 0; i < lights.size(); i++) {
+		if (lights[i]->ID == ID) {
+			lights.erase(lights.begin() + i);
+			return;
+		}
+	}
+
+	std::cout << "Light delete: light ID not found: " << ID << std::endl;
+}
+
 Object* RenderBatch::getObject(std::string& name)
+{
+	for (Object* obj : objects) {
+		if (obj->name == name) {
+			return obj;
+		}
+	}
+
+	return nullptr;
+}
+
+Object* RenderBatch::getObject(const char* name)
 {
 	for (Object* obj : objects) {
 		if (obj->name == name) {
@@ -128,7 +158,91 @@ void RenderBatch::setObjectTexture(std::string& name, Texture* texture)
 	obj->properties.textureID = texture->textureID;
 }
 
+void RenderBatch::setAmbientLight(const glm::vec4& ambient)
+{
+	lbo.ambientLight = ambient;
+}
+
 void RenderBatch::readOBJ(std::string& path)
+{
+	tinyobj::ObjReaderConfig reader_config;
+	reader_config.mtl_search_path = "./"; // Path to material files
+
+	tinyobj::ObjReader reader;
+
+	if (!reader.ParseFromFile(path, reader_config)) {
+		if (!reader.Error().empty()) {
+			std::cerr << "TinyObjReader: " << reader.Error();
+		}
+		exit(1);
+	}
+
+	if (!reader.Warning().empty()) {
+		std::cout << "TinyObjReader: " << reader.Warning();
+	}
+
+	auto& attrib = reader.GetAttrib();
+	auto& shapes = reader.GetShapes();
+	auto& materials = reader.GetMaterials();
+
+	std::vector<Object*> objectArr;
+
+	// Loop over shapes
+	for (size_t s = 0; s < shapes.size(); s++) {
+		std::vector<Vertex> tmpVertices;
+		std::vector<uint32_t> tmpIndices;
+		// Loop over faces(polygon)
+		size_t index_offset = 0;
+		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+			size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
+
+			// Loop over vertices in the face.
+			for (size_t v = 0; v < fv; v++) {
+				Vertex tmpVertex{};
+
+				// access to vertex
+				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+				tmpVertex.pos.x = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
+				tmpVertex.pos.y = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
+				tmpVertex.pos.z = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
+
+				// Check if `normal_index` is zero or positive. negative = no normal data
+				if (idx.normal_index >= 0) {
+					tmpVertex.normal.x = attrib.normals[3 * size_t(idx.normal_index) + 0];
+					tmpVertex.normal.y = attrib.normals[3 * size_t(idx.normal_index) + 1];
+					tmpVertex.normal.z = attrib.normals[3 * size_t(idx.normal_index) + 2];
+				}
+
+				// Check if `texcoord_index` is zero or positive. negative = no texcoord data
+				if (idx.texcoord_index >= 0) {
+					tmpVertex.texCoord.x = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+					tmpVertex.texCoord.y = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+				}
+
+				// Optional: vertex colors
+				// tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
+				// tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
+				// tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
+				tmpVertex.ID = 1;
+				tmpVertices.push_back(tmpVertex);
+
+				// Store the vertex index in the index buffer
+				tmpIndices.push_back(static_cast<uint32_t>(tmpIndices.size()));
+			}
+			index_offset += fv;
+
+			// per-face material
+			shapes[s].mesh.material_ids[f];
+		}
+		objectArr.push_back(new Object(shapes[s].name, tmpVertices, tmpIndices));
+	}
+
+	for (Object* obj : objectArr) {
+		addObject(obj);
+	}
+}
+
+void RenderBatch::readOBJ(const char* path)
 {
 	tinyobj::ObjReaderConfig reader_config;
 	reader_config.mtl_search_path = "./"; // Path to material files
@@ -277,11 +391,28 @@ void RenderBatch::createUniformBuffers()
 		vkMapMemory(device, objectPropertyBuffersMemory[i], 0, bufferSize, 0, &objectPropertyBuffersMapped[i]);
 	}
 
+	bufferSize = sizeof(LightBufferObject);
+
+	lightBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	lightBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+	lightBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, lightBuffers[i], lightBuffersMemory[i]);
+
+		vkMapMemory(device, lightBuffersMemory[i], 0, bufferSize, 0, &lightBuffersMapped[i]);
+	}
+
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		VkDescriptorBufferInfo bufferInfo{};
 		bufferInfo.buffer = uniformBuffers[i];
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
+
+		VkDescriptorBufferInfo lightBufferInfo{};
+		lightBufferInfo.buffer = lightBuffers[i];
+		lightBufferInfo.offset = 0;
+		lightBufferInfo.range = sizeof(LightBufferObject);
 
 		VkDescriptorBufferInfo propertybufferInfo{};
 		propertybufferInfo.buffer = objectPropertyBuffers[i];
@@ -301,6 +432,17 @@ void RenderBatch::createUniformBuffers()
 		descriptorWrite.pBufferInfo = &bufferInfo;
 		descriptorWrite.pImageInfo = nullptr; // Optional
 		descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+		VkWriteDescriptorSet descriptorWriteLight{};
+		descriptorWriteLight.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWriteLight.dstSet = descriptorSetsLight[i];
+		descriptorWriteLight.dstBinding = 0;
+		descriptorWriteLight.dstArrayElement = 0;
+		descriptorWriteLight.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWriteLight.descriptorCount = 1;
+		descriptorWriteLight.pBufferInfo = &lightBufferInfo;
+		descriptorWriteLight.pImageInfo = nullptr; // Optional
+		descriptorWriteLight.pTexelBufferView = nullptr; // Optional
 
 		VkWriteDescriptorSet descriptorWriteSampler{};
 		descriptorWriteSampler.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -323,9 +465,12 @@ void RenderBatch::createUniformBuffers()
 		descriptorWriteProperty.pImageInfo = nullptr; // Optional
 		descriptorWriteProperty.pTexelBufferView = nullptr; // Optional
 
-		VkWriteDescriptorSet sets[] = { descriptorWrite, descriptorWriteSampler, descriptorWriteProperty };
+		VkWriteDescriptorSet sets[] = { descriptorWriteLight, descriptorWrite, descriptorWriteSampler, descriptorWriteProperty };
 
-		vkUpdateDescriptorSets(device, 3, sets, 0, nullptr);
+		vkUpdateDescriptorSets(device, 4, sets, 0, nullptr);
+
+
+
 	}
 }
 
@@ -344,6 +489,10 @@ void RenderBatch::createDescriptorPool()
 	uniformPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	uniformPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
+	VkDescriptorPoolSize lightPool{};
+	lightPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	lightPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
 	VkDescriptorPoolSize texturePool{};
 	texturePool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	texturePool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
@@ -356,13 +505,13 @@ void RenderBatch::createDescriptorPool()
 	objectPropertyPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	objectPropertyPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-	VkDescriptorPoolSize sizes[] = { uniformPool, texturePool, samplerPool, objectPropertyPool };
+	VkDescriptorPoolSize sizes[] = { uniformPool, texturePool, samplerPool, objectPropertyPool, lightPool };
 
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 4;
+	poolInfo.poolSizeCount = 5;
 	poolInfo.pPoolSizes = sizes;
-	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT*2);
 
 	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
@@ -406,14 +555,37 @@ void RenderBatch::createDescriptorSetLayout()
 	layoutInfo.bindingCount = 4;
 	layoutInfo.pBindings = bindings;
 
+
 	if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
+
+
+	VkDescriptorSetLayoutBinding lightBinding{};
+	lightBinding.binding = 0;
+	lightBinding.descriptorCount = 1;
+	lightBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	lightBinding.pImmutableSamplers = nullptr;
+	lightBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutBinding bindingsLight[] = {lightBinding };
+
+
+	VkDescriptorSetLayoutCreateInfo layoutInfoLight{};
+	layoutInfoLight.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfoLight.bindingCount = 1;
+	layoutInfoLight.pBindings = bindingsLight;
+
+	if (vkCreateDescriptorSetLayout(device, &layoutInfoLight, nullptr, &descriptorSetLayoutLight) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor set layout!");
+	}
+
 }
 
 void RenderBatch::allocateDescriptorSets()
 {
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+
 
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -423,6 +595,20 @@ void RenderBatch::allocateDescriptorSets()
 
 	descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 	if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate descriptor sets!");
+	}
+
+
+	std::vector<VkDescriptorSetLayout> layoutsLight(MAX_FRAMES_IN_FLIGHT, descriptorSetLayoutLight);
+
+	VkDescriptorSetAllocateInfo allocInfoLight{};
+	allocInfoLight.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfoLight.descriptorPool = descriptorPool;
+	allocInfoLight.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	allocInfoLight.pSetLayouts = layoutsLight.data();
+
+	descriptorSetsLight.resize(MAX_FRAMES_IN_FLIGHT);
+	if (vkAllocateDescriptorSets(device, &allocInfoLight, descriptorSetsLight.data()) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
 }
@@ -482,6 +668,20 @@ void RenderBatch::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position,
 	memcpy(uniformBuffersMapped[targetFrame], &ubo, sizeof(ubo));
 
 	memcpy(objectPropertyBuffersMapped[targetFrame], propertyArray.data(), sizeof(objectProperties) * OBJECT_COUNT);
+}
+
+void RenderBatch::updateLightBuffer(uint32_t targetFrame)
+{
+	lbo.lightCount = lights.size();
+
+
+	for (int i = 0; i < lbo.lightCount; i++) {
+		lbo.lightPosArr[i] = lights[i]->position;
+		lbo.lightColorArr[i] = lights[i]->color;
+	}
+
+
+	memcpy(lightBuffersMapped[targetFrame], &lbo, sizeof(lbo));
 }
 
 void RenderBatch::createGraphicsPipeline()
@@ -657,10 +857,12 @@ void RenderBatch::createGraphicsPipeline()
 
 	// PIPELINE LAYOUT
 
+	VkDescriptorSetLayout layouts[] = { descriptorSetLayout , descriptorSetLayoutLight};
+
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+	pipelineLayoutInfo.setLayoutCount = 2;
+	pipelineLayoutInfo.pSetLayouts = layouts;
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 

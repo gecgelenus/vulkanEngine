@@ -115,6 +115,7 @@ void RenderQueue::drawFrame()
 	}
 	for (RenderBatch* b : batchList) {
 		b->updateUniformBuffer(imageIndex, position, direction, up);
+		b->updateLightBuffer(imageIndex);
 	}
 	if (stateUI) {
 		for (RenderBatchText* b : batchListText) {
@@ -321,7 +322,9 @@ void RenderQueue::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t in
 
 		vkCmdBindIndexBuffer(commandBuffer, batchList[i]->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchList[i]->pipelineLayout, 0, 1, &(batchList[i]->descriptorSets[currentFrame]), 0, nullptr);
+		VkDescriptorSet sets[] = { batchList[i]->descriptorSets[currentFrame] , batchList[i]->descriptorSetsLight[currentFrame] };
+
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchList[i]->pipelineLayout, 0, 2, sets, 0, nullptr);
 
 		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(batchList[i]->indices.size()), 1, 0, 0, 0);
 

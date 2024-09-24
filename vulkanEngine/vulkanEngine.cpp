@@ -101,52 +101,32 @@ private:
 		std::cout << "Number of Kernings: " << font.kernings.size() << "\n";
 
 
-		std::string text = "Selamlar ismim ahmet talha";
-		std::string text2 = "Oldu gibi ha sen ne dersin?";
-
-
-		float xPos = 500;
-		float yPos = 500;
-
+		
 		
 
 		
 
 
 		ObjectText* obj = new ObjectText("a", font);
-		ObjectText* obj2 = new ObjectText("b", font);
+		
+		std::string text = "Cursor enabled";
+
+
+		float xPos = 10;
+		float yPos = 10;
 
 
 		obj->setText(text, xPos, yPos);
-		obj2->setText(text2, xPos, yPos-40);
-		obj2->setColor(glm::vec3(1.0f, 0.0f, 0.0f));
 
-
-		
-
-		std::string texturePath = "bunny.jpg";
-		std::string texturePath2 = "texture.jpg";
-		std::string texturePath3 = "viking_room.png";
 
 		std::string texturePathText = "fonts/sansa_32_0.png";
 
 		Texture* textureText = new Texture(allocator, device, commandPool, graphicsQueue, texturePathText, false);
 
-		Texture* texture = new Texture(allocator, device, commandPool, graphicsQueue, texturePath, true);
-		Texture* texture2 = new Texture(allocator, device, commandPool, graphicsQueue, texturePath2, true);
-		Texture* texture3 = new Texture(allocator, device, commandPool, graphicsQueue, texturePath3, true);
-
+		
 
 
 	
-
-
-		std::string path = "monkeys.obj";
-		std::string path2 = "viking_room.obj";
-
-		std::string objName = "Suzanne";
-		std::string objName2 = "mesh_all1_Texture1_0";
-
 
 
 		RenderQueue renderQueue(vars);
@@ -154,24 +134,67 @@ private:
 		std::string batchName = "a";
 		std::string batchNameText = "TEXTBATCH";
 
-		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vert.spv", "shaders/frag.spv");
-		batch->readOBJ(path2);
-		batch->addTexture(texture3);
-		batch->addTexture(texture2);
-		batch->addTexture(texture);
+		Light* l1 = new Light();
+		l1->position = glm::vec4(1.0, 1.0, 1.0, 1.0);
+		l1->color = glm::vec4(1.0, 0.0, 1.0, 0.7);
+
+		Light* l2 = new Light();
+		l2->position = glm::vec4(-1.0, 1.0, -1.0, 1.0);
+		l2->color = glm::vec4(0.0, 1.0, 0.0, 0.7);
+
+		Light* l3 = new Light();
+		l3->position = glm::vec4(1.0, 1.0, -1.0, 1.0);
+		l3->color = glm::vec4(0.0, 1.0, 1.0, 0.7);
+
+		Light* l4 = new Light();
+		l4->position = glm::vec4(-1.0, 1.0, 1.0, 1.0);
+		l4->color = glm::vec4(1.0, 0.0, 0.0, 0.7);
+
+		Object* sphere1 = new Object("sphere1", "models/sphere.obj");
+		Object* sphere2 = new Object("sphere2", "models/sphere.obj");
+		Object* sphere3 = new Object("sphere3", "models/sphere.obj");
+		Object* sphere4 = new Object("sphere4", "models/sphere.obj");
+
+		sphere1->position = l1->position;
+		sphere2->position = l2->position;
+		sphere3->position = l3->position;
+		sphere4->position = l4->position;
+
+		sphere1->setColor(l1->color);
+		sphere2->setColor(l2->color);
+		sphere3->setColor(l3->color);
+		sphere4->setColor(l4->color);
 
 
-		batch->getObject(objName2)->position = glm::vec3(5.0f, 5.0f, 0.0f);
-		batch->setObjectTexture(objName2, texture);
 
+
+		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vertFlat.spv", "shaders/fragFlat.spv");
+		batch->readOBJ("models/vase_scene.obj");
+		batch->addObject(sphere1);
+		batch->addObject(sphere2);
+		batch->addObject(sphere3);
+		batch->addObject(sphere4);
+
+
+		batch->getObject("vase")->setColor(glm::vec3(1.0f, 1.0f, 1.0f));
+		batch->getObject("surface")->setColor(glm::vec3(1.0f, 1.0f, 1.0f));
+
+		
+
+		batch->resetBuffers();
+
+		batch->addLight(l1);
+		batch->addLight(l2);
+		batch->addLight(l3);
+		batch->addLight(l4);
+
+		batch->setAmbientLight(glm::vec4(1.0f, 1.0f, 1.0f, 0.2f));
 
 		RenderBatchText* batchText = new RenderBatchText(batchName, vars, "shaders/vertText.spv", "shaders/fragText.spv");
 		batchText->addObject(obj);
-		batchText->addObject(obj2);
 
 		batchText->addTexture(textureText);
 		batchText->setObjectTexture(obj->name, textureText);
-		batchText->setObjectTexture(obj2->name, textureText);
 		batchText->resetBuffers();
 		renderQueue.pushToQueue(batch);
 

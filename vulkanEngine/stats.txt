@@ -11,13 +11,11 @@
     "memoryTypeCount": 6
   }, 
   "Total": {
-    "BlockCount": 5, 
-    "BlockBytes": 46596096, 
-    "AllocationCount": 4, 
-    "AllocationBytes": 13041664, 
-    "UnusedRangeCount": 1, 
-    "AllocationSizeMin": 1048576, 
-    "AllocationSizeMax": 5242880
+    "BlockCount": 2, 
+    "BlockBytes": 34603008, 
+    "AllocationCount": 1, 
+    "AllocationBytes": 1048576, 
+    "UnusedRangeCount": 1
   }, 
   "MemoryInfo": {
     "Heap 0": {
@@ -25,28 +23,24 @@
       "Size": 8374976512, 
       "Budget": {
         "BudgetBytes": 7569670144, 
-        "UsageBytes": 234024960
+        "UsageBytes": 222031872
       }, 
       "Stats": {
-        "BlockCount": 4, 
-        "BlockBytes": 13041664, 
-        "AllocationCount": 4, 
-        "AllocationBytes": 13041664, 
-        "UnusedRangeCount": 0, 
-        "AllocationSizeMin": 1048576, 
-        "AllocationSizeMax": 5242880
+        "BlockCount": 1, 
+        "BlockBytes": 1048576, 
+        "AllocationCount": 1, 
+        "AllocationBytes": 1048576, 
+        "UnusedRangeCount": 0
       }, 
       "MemoryPools": {
         "Type 1": {
           "Flags": ["DEVICE_LOCAL"], 
           "Stats": {
-            "BlockCount": 4, 
-            "BlockBytes": 13041664, 
-            "AllocationCount": 4, 
-            "AllocationBytes": 13041664, 
-            "UnusedRangeCount": 0, 
-            "AllocationSizeMin": 1048576, 
-            "AllocationSizeMax": 5242880
+            "BlockCount": 1, 
+            "BlockBytes": 1048576, 
+            "AllocationCount": 1, 
+            "AllocationBytes": 1048576, 
+            "UnusedRangeCount": 0
           }
         }, 
         "Type 2": {
@@ -112,8 +106,8 @@
       "Flags": ["DEVICE_LOCAL"], 
       "Size": 224395264, 
       "Budget": {
-        "BudgetBytes": 216576000, 
-        "UsageBytes": 7819264
+        "BudgetBytes": 218836992, 
+        "UsageBytes": 5558272
       }, 
       "Stats": {
         "BlockCount": 0, 
@@ -149,10 +143,7 @@
       "Blocks": {
       }, 
       "DedicatedAllocations": [
-        {"Type": "IMAGE_OPTIMAL", "Size": 1048576, "Usage": 6}, 
-        {"Type": "IMAGE_OPTIMAL", "Size": 2555904, "Usage": 6}, 
-        {"Type": "IMAGE_OPTIMAL", "Size": 5242880, "Usage": 6}, 
-        {"Type": "IMAGE_OPTIMAL", "Size": 4194304, "Usage": 6}
+        {"Type": "IMAGE_OPTIMAL", "Size": 1048576, "Usage": 6}
       ]
     }, 
     "Type 2": {
@@ -173,6 +164,30 @@
           "UnusedRanges": 1, 
           "Suballocations": [
             {"Offset": 0, "Type": "FREE", "Size": 33554432}
+          ]
+        }
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 4": {
+      "PreferredBlockSize": 268435456, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }, 
+    "Type 5": {
+      "PreferredBlockSize": 28049408, 
+      "Blocks": {
+      }, 
+      "DedicatedAllocations": [
+      ]
+    }
+  }, 
+  "CustomPools": {
+  }
+}{"Offset": 0, "Type": "FREE", "Size": 33554432}
           ]
         }
       }, 

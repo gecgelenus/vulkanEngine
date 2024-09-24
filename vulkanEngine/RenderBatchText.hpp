@@ -18,6 +18,8 @@ public:
 	void createIndexBuffer();
 	void createUniformBuffers();
 	void createDescriptorSetLayout();
+	void createDescriptorPool();
+	void allocateDescriptorSets();
 
 	void updateUniformBuffer(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up);
 	void setObjectTexture(std::string& name, Texture* texture);

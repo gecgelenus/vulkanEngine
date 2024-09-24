@@ -38,7 +38,6 @@ void FontData::parseInfo(const std::string& line)
 				size = std::stoi(token.substr(5));
 			}
 			else if (token.find("scaleW=") == 0) {
-				std::cout << "sad" << std::endl;
 				scale = std::stof(token.substr(7));
 			}
 		}

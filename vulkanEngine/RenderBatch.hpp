@@ -5,6 +5,7 @@
 #include "Util.hpp"
 #include "Object.hpp"
 #include "Texture.hpp"
+#include "Light.hpp"
 
 
 class RenderBatch {
@@ -15,12 +16,20 @@ public:
 	~RenderBatch();
 
 	void addObject(Object*);
+	void addLight(Light*);
+
 	void deleteObject(std::string& name);
+	void deleteLight(uint32_t ID);
 
 	Object* getObject(std::string& name);
+	Object* getObject(const char* name);
+
 	void setObjectTexture(std::string& name, Texture* texture);
+	void setAmbientLight(const glm::vec4& ambient);
 
 	void readOBJ(std::string& path);
+	void readOBJ(const char* path);
+
 	void createCommandPool();
 	void createCommandBuffers();
 	void createVertexBuffer();
@@ -33,6 +42,7 @@ public:
 	void allocateDescriptorSets();
 	void createTextureSampler();
 	void updateUniformBuffer(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up);
+	void updateLightBuffer(uint32_t targetFrame);
 	void createGraphicsPipeline();
 
 
@@ -75,6 +85,10 @@ public:
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 	std::vector<void*> uniformBuffersMapped;
 
+	std::vector<VkBuffer> lightBuffers;
+	std::vector<VkDeviceMemory> lightBuffersMemory;
+	std::vector<void*> lightBuffersMapped;
+
 	std::vector<VkBuffer> objectPropertyBuffers;
 	std::vector<VkDeviceMemory> objectPropertyBuffersMemory;
 	std::vector<void*> objectPropertyBuffersMapped;
@@ -87,7 +101,11 @@ public:
 
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorSetLayout descriptorSetLayoutLight;
+
 	std::vector<VkDescriptorSet> descriptorSets;
+	std::vector<VkDescriptorSet> descriptorSetsLight;
+	LightBufferObject lbo;
 
 	uint32_t WIDTH = 1600;
 	uint32_t HEIGHT = 900;
@@ -99,6 +117,8 @@ public:
 
 	const char* vertexPath;
 	const char* fragmentPath;
+	void resetBuffers();
+
 
 protected:
 
@@ -106,7 +126,6 @@ protected:
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-	void resetBuffers();
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	static std::vector<char> readFile(const std::string& filename);
 
@@ -115,6 +134,8 @@ protected:
 	void deleteTexture(Texture* texture);
 
 	std::vector<Object*> objects;
+	std::vector<Light*> lights;
+
 
 	const int MAX_FRAMES_IN_FLIGHT = 3;
 

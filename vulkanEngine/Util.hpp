@@ -15,6 +15,8 @@
 
 #define STORAGE_MB size_t(1048576)
 
+#define MAX_LIGHT_COUNT 100
+
 
 struct InstanceVariables {
 
@@ -69,11 +71,19 @@ struct objectProperties {
 	glm::uint normalMapID;
 
 };
+
 struct UniformBufferObject {
 	glm::mat4 model[1000];
 	glm::mat4 view;
 	glm::mat4 proj;
+};
 
+struct LightBufferObject {
+
+	glm::vec4 lightPosArr[MAX_LIGHT_COUNT];
+	glm::vec4 lightColorArr[MAX_LIGHT_COUNT];
+	glm::vec4 ambientLight;
+	glm::uint32 lightCount;
 };
 
 struct UniformBufferObjectVP {

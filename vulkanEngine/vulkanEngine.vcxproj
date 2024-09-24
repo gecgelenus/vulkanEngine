@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Font.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Object.hpp" />
     <ClCompile Include="ObjectText.cpp" />
@@ -151,13 +152,8 @@
     <ClCompile Include="vulkanEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.frag" />
-    <None Include="shader.vert" />
-    <None Include="shaderText.frag" />
-    <None Include="shaderText.vert" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Font.hpp" />
+    <ClInclude Include="Light.hpp" />
     <ClInclude Include="ObjectText.hpp" />
     <ClInclude Include="RenderBatch.hpp" />
     <ClInclude Include="RenderBatchText.hpp" />

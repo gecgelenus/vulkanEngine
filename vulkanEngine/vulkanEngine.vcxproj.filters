@@ -51,12 +51,9 @@
     <ClCompile Include="Font.cpp">
       <Filter>Kaynak Dosyalar</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shader.vert" />
-    <None Include="shader.frag" />
-    <None Include="shaderText.frag" />
-    <None Include="shaderText.vert" />
+    <ClCompile Include="Light.cpp">
+      <Filter>Kaynak Dosyalar</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vulkan_mem_alloc.h">
@@ -87,6 +84,9 @@
       <Filter>Üst Bilgi Dosyaları</Filter>
     </ClInclude>
     <ClInclude Include="Font.hpp">
+      <Filter>Üst Bilgi Dosyaları</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.hpp">
       <Filter>Üst Bilgi Dosyaları</Filter>
     </ClInclude>
   </ItemGroup>
