@@ -132,7 +132,6 @@ private:
 
 		RenderQueue renderQueue(vars);
 
-		std::string batchName = "a";
 		std::string batchNameText = "TEXTBATCH";
 
 		Light* l1 = new Light();
