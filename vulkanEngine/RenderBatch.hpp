@@ -94,6 +94,9 @@ public:
 	std::vector<VmaAllocation> objectPropertyBuffersAllocation;
 	std::vector<void*> objectPropertyBuffersMapped;
 
+	std::vector<VkBuffer> materialBuffers;
+	std::vector<VmaAllocation> materialBuffersAllocation;
+	std::vector<void*> materialBuffersMapped;
 
 	VkRenderPass renderPass;
 	VkSampler textureSampler;
@@ -141,7 +144,9 @@ protected:
 
 	std::vector<Object*> objects;
 	std::vector<Light*> lights;
+	MaterialBufferObject mbo;
 
+	uint32_t materialCount;
 
 	const int MAX_FRAMES_IN_FLIGHT = 3;
 

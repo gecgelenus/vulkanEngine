@@ -17,6 +17,8 @@
 #define STORAGE_MB size_t(1048576)
 
 #define MAX_LIGHT_COUNT 100
+#define MAX_MATERIAL_COUNT 100
+
 
 
 struct InstanceVariables {
@@ -38,15 +40,32 @@ struct InstanceVariables {
 
 
 };
+// Assume you have a Material struct to hold material properties
+struct Material {
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	float shininess;
+	float transparency;
+	int textureID;  // To reference a texture if necessary
+};
 
 
+struct MaterialBufferObject {
+	glm::vec4 ambient[100];
+	glm::vec4 diffuse[100]; // 4.component of diffuse is transparency
+	glm::vec4 specular[100]; // 4.component of specular is shininess
+	glm::uvec4 textureID[100];  // To reference a texture if necessary
+};
 
 struct Vertex {
 	glm::vec3 pos;
 	glm::vec3 normal;
-	glm::vec3 color;
+	glm::vec4 color;
 	glm::vec2 texCoord;
 	glm::uint32 ID;
+	glm::uint32 materialID;
+
 };
 
 struct CharInfo {

@@ -13,7 +13,15 @@ layout(set = 1, binding = 0) uniform LightBufferObject{
 } lbo;
 
 
-layout(location = 0) in vec3 fragColor;
+layout(set = 0, binding = 4) uniform MaterialBufferObject {
+	vec4 ambient[100];
+	vec4 diffuse[100]; // 4.component of diffuse is transparency
+	vec4 specular[100]; // 4.component of specular is shininess
+	uint textureID[100];  // To reference a texture if necessary
+}mbo;
+
+
+layout(location = 0) in vec4 fragColor;
 layout(location = 1) in vec2 fragTexCoord;
 layout(location = 2) in vec3 fragNormal;
 layout(location = 3) in vec3 fragPos;
@@ -49,7 +57,7 @@ void main() {
         
         lightDir = normalize(lightDir);
 
-        vec3 diff = lightColor * max(dot(fragNormal, lightDir), 0);
+        vec3 diff = lightColor * max(dot(fragNormal, lightDir), 0) * mbo.diffuse[materialID].xyz;
         diffuseLight += diff;
 
 
@@ -57,13 +65,13 @@ void main() {
         vec3 halfAngle = normalize(lightDir + viewDir);
         float specAngle = dot(surfaceNormal, halfAngle);
         specAngle = clamp(specAngle, 0, 1);
-        float specular = pow(specAngle, 32.0);
+        float specular = pow(specAngle, mbo.specular[materialID].a);
 
 
-        specularLight += specular * lightColor;
+        specularLight += specular * lightColor * mbo.specular[materialID].xyz;
 
     }
 
-    outColor =  vec4(fragColor * diffuseLight + specularLight * fragColor, 1.0);
+    outColor =  vec4(mbo.diffuse[materialID].xyz * (diffuseLight + specularLight), mbo.diffuse[materialID].a);
 
 }

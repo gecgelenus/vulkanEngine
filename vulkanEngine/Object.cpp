@@ -17,6 +17,8 @@ Object::Object(std::string name, std::vector<Vertex> vertices, std::vector<uint3
 	this->indices = indices;
 	this->objectID = 0;
 	this->offset = 0;
+	this->materialOffset = 0;
+
 	this->properties = {};
 	this->position = glm::vec3(0.0f, 0.0f, 0.0f);
 }
@@ -27,6 +29,8 @@ Object::Object(const char* name, std::vector<Vertex> vertices, std::vector<uint3
 	this->vertices = vertices;
 	this->indices = indices;
 	this->objectID = 0;
+	this->materialOffset = 0;
+
 	this->offset = 0;
 	this->properties = {};
 	this->position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -38,6 +42,8 @@ Object::Object(const char* name, const char* path)
 	this->objectID = 0;
 	this->offset = 0;
 	this->properties = {};
+	this->materialOffset = 0;
+
 	this->position = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	loadOBJ(path);
@@ -56,7 +62,15 @@ void Object::setID(uint32_t id)
 	}
 }
 
-void Object::setColor(const glm::vec3& color)
+void Object::setMaterialOffset()
+{
+
+	for (int i = 0; i < vertices.size(); i++) {
+		vertices[i].materialID += materialOffset;
+	}
+}
+
+void Object::setColor(const glm::vec4& color)
 {
 	this->color = color;
 
@@ -79,7 +93,7 @@ void Object::loadOBJ(const char* path)
 
 
 	tinyobj::ObjReaderConfig reader_config;
-	reader_config.mtl_search_path = "./"; // Path to material files
+	reader_config.mtl_search_path = "./models/"; // Path to material files
 
 	tinyobj::ObjReader reader;
 
@@ -96,7 +110,22 @@ void Object::loadOBJ(const char* path)
 
 	auto& attrib = reader.GetAttrib();
 	auto& shapes = reader.GetShapes();
-	auto& materials = reader.GetMaterials();
+	auto& objMaterials = reader.GetMaterials();
+
+
+
+	// Load materials
+	for (const auto& mat : objMaterials) {
+		Material tmpMaterial;
+		tmpMaterial.ambient = { mat.ambient[0], mat.ambient[1], mat.ambient[2] };
+		tmpMaterial.diffuse = { mat.diffuse[0], mat.diffuse[1], mat.diffuse[2] };
+		tmpMaterial.specular = { mat.specular[0], mat.specular[1], mat.specular[2] };
+		tmpMaterial.shininess = mat.shininess;
+		tmpMaterial.transparency = mat.dissolve;  // Transparency (1.0 - dissolve)
+
+		
+		materials.push_back(tmpMaterial);
+	}
 
 
 	// Loop over shapes
@@ -105,7 +134,7 @@ void Object::loadOBJ(const char* path)
 		size_t index_offset = 0;
 		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
 			size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
-
+			int material_id = shapes[s].mesh.material_ids[f];
 			// Loop over vertices in the face.
 			for (size_t v = 0; v < fv; v++) {
 				Vertex tmpVertex{};
@@ -134,6 +163,7 @@ void Object::loadOBJ(const char* path)
 				// tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
 				// tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
 				tmpVertex.ID = 1;
+				tmpVertex.materialID = static_cast<uint32_t>(material_id);
 				vertices.push_back(tmpVertex);
 
 				// Store the vertex index in the index buffer
@@ -142,7 +172,6 @@ void Object::loadOBJ(const char* path)
 			index_offset += fv;
 
 			// per-face material
-			shapes[s].mesh.material_ids[f];
 		}
 
 	}

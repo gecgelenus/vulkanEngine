@@ -135,48 +135,30 @@ private:
 		std::string batchNameText = "TEXTBATCH";
 
 		Light* l1 = new Light();
-		l1->position = glm::vec4(1.0, 3.0, 1.0, 1.0);
-		l1->color = glm::vec4(1.0, 0.0, 1.0, 0.7);
+		l1->position = glm::vec4(5.0, 8.0, 5.0, 1.0);
+		l1->color = glm::vec4(1.0, 1.0, 1.0, 250.0);
 
-		Light* l2 = new Light();
-		l2->position = glm::vec4(-1.0, 3.0, -1.0, 1.0);
-		l2->color = glm::vec4(0.0, 1.0, 0.0, 0.7);
-
-		Light* l3 = new Light();
-		l3->position = glm::vec4(1.0, 3, -1.0, 1.0);
-		l3->color = glm::vec4(0.0, 1.0, 1.0, 0.7);
-
-		Light* l4 = new Light();
-		l4->position = glm::vec4(-1.0, 3, 0.0, 1.0);
-		l4->color = glm::vec4(1.0, 0.0, 0.0, 0.7);
+		
 
 		Object* sphere1 = new Object("sphere1", "models/sphere.obj");
 		Object* sphere2 = new Object("sphere2", "models/sphere.obj");
 		Object* sphere3 = new Object("sphere3", "models/sphere.obj");
 		Object* sphere4 = new Object("sphere4", "models/sphere.obj");
-		Object* car = new Object("car", "models/BMW27.obj");
-		car->setColor(glm::vec3(1.0f));
+		Object* well = new Object("well", "models/well.obj");
+		well->setColor(glm::vec4(1.0f));
 		
 
 		sphere1->position = l1->position;
-		sphere2->position = l2->position;
-		sphere3->position = l3->position;
-		sphere4->position = l4->position;
-
+		
 		sphere1->setColor(l1->color);
-		sphere2->setColor(l2->color);
-		sphere3->setColor(l3->color);
-		sphere4->setColor(l4->color);
+		
 
 
-
-
+		std::string batchName = "asd";
 		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vertFlat.spv", "shaders/fragFlat.spv");
 		batch->addObject(sphere1);
-		batch->addObject(sphere2);
-		batch->addObject(sphere3);
-		batch->addObject(sphere4);
-		batch->addObject(car);
+		
+		batch->addObject(well);
 
 
 		
@@ -184,9 +166,7 @@ private:
 		batch->resetBuffers();
 
 		batch->addLight(l1);
-		batch->addLight(l2);
-		batch->addLight(l3);
-		batch->addLight(l4);
+		
 
 		batch->setAmbientLight(glm::vec4(1.0f, 1.0f, 1.0f, 0.2f));
 

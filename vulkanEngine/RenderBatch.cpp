@@ -29,6 +29,8 @@ RenderBatch::RenderBatch(std::string& name, InstanceVariables& vars, const char*
     this->fragmentPath = fragmentPath;
 	this->allocator = vars.allocator;
 
+	this->materialCount = 0;
+
 	createCommandPool();
 	createCommandBuffers();
 	createDescriptorPool();
@@ -48,10 +50,27 @@ RenderBatch::~RenderBatch()
 void RenderBatch::addObject(Object* obj)
 {
 	uint32_t offset = this->vertices.size();
+	
 	obj->offset = offset;
+	obj->materialOffset = this->materialCount;
 	obj->setID(objects.size());
+	obj->setMaterialOffset(); // second update or more result undefined behaivor TODO: fix it
 	obj->properties.objectID = objects.size();
 	std::cout << "ID: " << obj->getID() << std::endl;
+
+	for (const Material& mtl : obj->materials) {
+		mbo.ambient[materialCount] = glm::vec4(mtl.ambient, 1.0f);
+		mbo.diffuse[materialCount] = glm::vec4(mtl.diffuse, mtl.transparency);
+		mbo.specular[materialCount] = glm::vec4(mtl.specular, mtl.shininess);
+		mbo.textureID[materialCount][0] = mtl.textureID;
+		materialCount++;
+		if (MAX_MATERIAL_COUNT <= materialCount) {
+			std::cout << "MATERIAL LIMIT EXCEEDED!!" << std::endl;
+			break;
+		}
+	}
+
+
 
 	this->vertices.insert(this->vertices.end(), obj->vertices.begin(), obj->vertices.end());
 
@@ -310,7 +329,7 @@ void RenderBatch::readOBJ(const char* path)
 				// tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
 				// tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
 				tmpVertex.ID = 1;
-				tmpVertex.color = glm::vec3(1.0f);
+				tmpVertex.color = glm::vec4(1.0f);
 				tmpVertices.push_back(tmpVertex);
 
 				// Store the vertex index in the index buffer
@@ -409,6 +428,22 @@ void RenderBatch::createUniformBuffers()
 		objectPropertyBuffersMapped[i] = info.pMappedData;
 	}
 
+	bufferSize = sizeof(MaterialBufferObject);
+
+	materialBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	materialBuffersAllocation.resize(MAX_FRAMES_IN_FLIGHT);
+	materialBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		VmaAllocationInfo info = createBuffer(bufferSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+			VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+			VMA_ALLOCATION_CREATE_MAPPED_BIT,
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, materialBuffers[i], materialBuffersAllocation[i]);
+
+		materialBuffersMapped[i] = info.pMappedData;
+	}
+
+
 	bufferSize = sizeof(LightBufferObject);
 
 	lightBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -439,6 +474,12 @@ void RenderBatch::createUniformBuffers()
 		propertybufferInfo.buffer = objectPropertyBuffers[i];
 		propertybufferInfo.offset = 0;
 		propertybufferInfo.range = sizeof(objectProperties) * OBJECT_COUNT;
+
+		VkDescriptorBufferInfo materialBufferInfo{};
+		materialBufferInfo.buffer = materialBuffers[i];
+		materialBufferInfo.offset = 0;
+		materialBufferInfo.range = sizeof(MaterialBufferObject);
+
 
 		VkDescriptorImageInfo samplerInfo{};
 		samplerInfo.sampler = textureSampler;
@@ -486,9 +527,21 @@ void RenderBatch::createUniformBuffers()
 		descriptorWriteProperty.pImageInfo = nullptr; // Optional
 		descriptorWriteProperty.pTexelBufferView = nullptr; // Optional
 
-		VkWriteDescriptorSet sets[] = { descriptorWriteLight, descriptorWrite, descriptorWriteSampler, descriptorWriteProperty };
 
-		vkUpdateDescriptorSets(device, 4, sets, 0, nullptr);
+		VkWriteDescriptorSet descriptorWriteMaterial{};
+		descriptorWriteMaterial.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWriteMaterial.dstSet = descriptorSets[i];
+		descriptorWriteMaterial.dstBinding = 4;
+		descriptorWriteMaterial.dstArrayElement = 0;
+		descriptorWriteMaterial.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWriteMaterial.descriptorCount = 1;
+		descriptorWriteMaterial.pBufferInfo = &materialBufferInfo;
+		descriptorWriteMaterial.pImageInfo = nullptr; // Optional
+		descriptorWriteMaterial.pTexelBufferView = nullptr; // Optional
+
+		VkWriteDescriptorSet sets[] = { descriptorWriteLight, descriptorWrite, descriptorWriteSampler, descriptorWriteProperty, descriptorWriteMaterial };
+
+		vkUpdateDescriptorSets(device, 5, sets, 0, nullptr);
 
 
 
@@ -514,6 +567,11 @@ void RenderBatch::createDescriptorPool()
 	lightPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	lightPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
+	VkDescriptorPoolSize materialPool{};
+	materialPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	materialPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+
 	VkDescriptorPoolSize texturePool{};
 	texturePool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	texturePool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
@@ -526,11 +584,11 @@ void RenderBatch::createDescriptorPool()
 	objectPropertyPool.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	objectPropertyPool.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-	VkDescriptorPoolSize sizes[] = { uniformPool, texturePool, samplerPool, objectPropertyPool, lightPool };
+	VkDescriptorPoolSize sizes[] = { uniformPool, texturePool, samplerPool, objectPropertyPool, lightPool, materialPool };
 
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 5;
+	poolInfo.poolSizeCount = 6;
 	poolInfo.pPoolSizes = sizes;
 	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT*2);
 
@@ -569,11 +627,18 @@ void RenderBatch::createDescriptorSetLayout()
 	objectPropertyBinding.pImmutableSamplers = nullptr;
 	objectPropertyBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-	VkDescriptorSetLayoutBinding bindings[] = { uboLayoutBinding , samplerLayoutBinding, textureBinding, objectPropertyBinding };
+	VkDescriptorSetLayoutBinding materialBufferBinding{};
+	materialBufferBinding.binding = 4;
+	materialBufferBinding.descriptorCount = 1;
+	materialBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	materialBufferBinding.pImmutableSamplers = nullptr;
+	materialBufferBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutBinding bindings[] = { uboLayoutBinding , samplerLayoutBinding, textureBinding, objectPropertyBinding, materialBufferBinding };
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 4;
+	layoutInfo.bindingCount = 5;
 	layoutInfo.pBindings = bindings;
 
 
@@ -690,6 +755,9 @@ void RenderBatch::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position,
 	memcpy(uniformBuffersMapped[targetFrame], &ubo, sizeof(ubo));
 
 	memcpy(objectPropertyBuffersMapped[targetFrame], propertyArray.data(), sizeof(objectProperties) * OBJECT_COUNT);
+
+	memcpy(materialBuffersMapped[targetFrame], &mbo, sizeof(MaterialBufferObject));
+
 }
 
 void RenderBatch::updateLightBuffer(uint32_t targetFrame)
@@ -763,7 +831,7 @@ void RenderBatch::createGraphicsPipeline()
 	VkVertexInputAttributeDescription attributeDescription2{};
 	attributeDescription2.binding = 0;
 	attributeDescription2.location = 2;
-	attributeDescription2.format = VK_FORMAT_R32G32B32_SFLOAT;
+	attributeDescription2.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	attributeDescription2.offset = offsetof(Vertex, color);
 
 	VkVertexInputAttributeDescription attributeDescription3{};
@@ -778,13 +846,19 @@ void RenderBatch::createGraphicsPipeline()
 	attributeDescription4.format = VK_FORMAT_R32_UINT;
 	attributeDescription4.offset = offsetof(Vertex, ID);
 
-	VkVertexInputAttributeDescription descriptions[] = { attributeDescription0 , attributeDescription1, attributeDescription2, attributeDescription3, attributeDescription4 };
+	VkVertexInputAttributeDescription attributeDescription5{};
+	attributeDescription5.binding = 0;
+	attributeDescription5.location = 5;
+	attributeDescription5.format = VK_FORMAT_R32_UINT;
+	attributeDescription5.offset = offsetof(Vertex, materialID);
+
+	VkVertexInputAttributeDescription descriptions[] = { attributeDescription0 , attributeDescription1, attributeDescription2, attributeDescription3, attributeDescription4, attributeDescription5 };
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription; // Optional
-	vertexInputInfo.vertexAttributeDescriptionCount = 5;
+	vertexInputInfo.vertexAttributeDescriptionCount = 6;
 	vertexInputInfo.pVertexAttributeDescriptions = descriptions; // Optional
 
 	// INPUT ASSEMBLY
@@ -857,9 +931,9 @@ void RenderBatch::createGraphicsPipeline()
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA; // Optional
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
 	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
 	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
 	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
