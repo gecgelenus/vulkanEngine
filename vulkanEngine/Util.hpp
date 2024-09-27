@@ -35,6 +35,7 @@ struct InstanceVariables {
 	VkExtent2D swapchainExtent;
 	VkSurfaceKHR surface;
 	VkRenderPass renderpass;
+	uint32_t minImageCount;
 	uint32_t WIDTH;
 	uint32_t HEIGHT;
 

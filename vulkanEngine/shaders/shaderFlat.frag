@@ -39,7 +39,7 @@ void main() {
 
     vec3 surfaceNormal = normalize(fragNormal);
     
-    vec3 diffuseLight = lbo.ambientLight.xyz * lbo.ambientLight.a;
+    vec3 diffuseLight = mbo.ambient[materialID].xyz;
 
     vec3 specularLight = vec3(0.0f);
 
@@ -49,8 +49,8 @@ void main() {
     for(int i = 0; i < lbo.count; i++){
         
 	    vec3 lightDir = lbo.lightPos[i].xyz - fragPos;
-    
-        float attenuation = 1.0f / dot(lightDir, lightDir);
+        float distance = length(lightDir);
+        float attenuation = 1.0f / 1.0 / (1.0 + 0.3*distance + 0.3*distance*distance);
         // dot product of any vector with itself gives square of distance
         
         vec3 lightColor = attenuation * (lbo.lightColor[i].xyz * lbo.lightColor[i].a);

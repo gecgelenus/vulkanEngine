@@ -2,6 +2,20 @@
 #include <iostream>
 
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
+static void check_vk_result(VkResult err)
+{
+	if (err == 0)
+		return;
+	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+	if (err < 0)
+		abort();
+}
+
+
 RenderQueue::RenderQueue(InstanceVariables& vars)
 {
 	this->instance = vars;
@@ -26,6 +40,11 @@ RenderQueue::RenderQueue(InstanceVariables& vars)
 
 RenderQueue::~RenderQueue()
 {
+
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(instance.device, renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(instance.device, imageAvailableSemaphores[i], nullptr);
@@ -47,6 +66,8 @@ void RenderQueue::pushToQueue(RenderBatchText* batchText)
 {
 	batchListText.push_back(batchText);
 	std::cout << "Render queue -> batch added to (text) queue: " << batchText->name << std::endl;
+	initImGui();
+
 }
 
 void RenderQueue::removeFromQueue(RenderBatch* batch)
@@ -89,7 +110,6 @@ void RenderQueue::updateCommandBuffers()
 void RenderQueue::drawFrame()
 {
 	vkWaitForFences(instance.device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-	vkResetFences(instance.device, 1, &inFlightFences[currentFrame]);
 
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(instance.device, instance.swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -123,6 +143,7 @@ void RenderQueue::drawFrame()
 		}
 	}
 	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+	vkResetFences(instance.device, 1, &inFlightFences[currentFrame]);
 
 	if (vkQueueSubmit(instance.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to submit draw command buffer!");
@@ -275,7 +296,7 @@ void RenderQueue::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t in
 
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = 0; // Optional
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT; 
 	beginInfo.pInheritanceInfo = nullptr; // Optional
 
 	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
@@ -350,6 +371,16 @@ void RenderQueue::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t in
 
 			vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(batchListText[i]->indices.size()), 1, 0, 0, 0);
 
+
+			ImGui_ImplVulkan_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+
+			ImGuiWindow();
+
+			ImGui::Render();
+
+			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 		}
 	}
 
@@ -382,4 +413,119 @@ void RenderQueue::createSyncObjects()
 			throw std::runtime_error("failed to create synchronization objects for a frame!");
 		}
 	}
+}
+
+void RenderQueue::initImGui()
+{
+	ImGui::CreateContext();
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+
+	ImGui_ImplGlfw_InitForVulkan(instance.window, true);
+
+	ImGui_ImplVulkan_InitInfo initInfo;
+	initInfo.DescriptorPool = batchListText[0]->descriptorPool;
+	initInfo.Instance = instance.instance;
+	initInfo.Queue = instance.graphicsQueue;
+	initInfo.QueueFamily = 0;
+	initInfo.Subpass = 0;
+	initInfo.CheckVkResultFn = check_vk_result;
+	initInfo.PipelineCache = nullptr;
+	initInfo.UseDynamicRendering = false;
+	initInfo.Allocator = nullptr;
+	initInfo.RenderPass = instance.renderpass;
+	initInfo.Device = instance.device;
+	initInfo.PhysicalDevice = instance.physicalDevice;
+	initInfo.ImageCount = MAX_FRAMES_IN_FLIGHT;
+	initInfo.MinImageCount = instance.minImageCount;
+	initInfo.MSAASamples = batchListText[0]->msaaSamples;
+	initInfo.MinAllocationSize = 1024*1024;
+	ImGui_ImplVulkan_Init(&initInfo);
+
+
+	ImGui_ImplVulkan_CreateFontsTexture();
+
+	vkDeviceWaitIdle(instance.device);
+
+
+
+
+
+}
+
+// Callback function
+int MyCallback(ImGuiInputTextCallbackData* data) {
+	if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
+		// Handle tab completion here
+	}
+	else if (data->EventFlag == ImGuiInputTextFlags_CallbackHistory) {
+		// Handle history navigation here
+	}
+	std::cout << "hi" << std::endl;
+	std::cout << data->BufTextLen << std::endl;
+
+	std::cout << data->Buf << std::endl;
+	return 0;
+}
+
+void RenderQueue::ImGuiWindow()
+{
+
+	static float sliderValue = 0.0f;
+
+	static char buffer[128] = "Type here...";
+	if (ImGui::Begin("Example Input")) {
+		ImGui::InputText("Input with callback", buffer, IM_ARRAYSIZE(buffer), ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, MyCallback);
+		for (int bt = 0; bt < batchList.size(); bt++) {
+			for (int l = 0; l < batchList[bt]->lights.size(); l++) {
+				std::string name = batchList[bt]->lights[l]->name + " Power ";
+				if (ImGui::SliderFloat(name.c_str(), &sliderValue, 0.0f, 5000.0f)) {
+					batchList[bt]->lights[l]->color = glm::vec4(batchList[bt]->lights[l]->color.x,
+						batchList[bt]->lights[l]->color.y, batchList[bt]->lights[l]->color.z, sliderValue);
+				}
+			}
+		}
+		
+		
+	}
+	
+	ImGui::End();
+}
+
+
+
+
+VkCommandBuffer RenderQueue::beginSingleTimeCommands()
+{
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(instance.device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	return commandBuffer;
+}
+
+void RenderQueue::endSingleTimeCommands(VkCommandBuffer commandBuffer)
+{
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(instance.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(instance.graphicsQueue);
+
+	vkFreeCommandBuffers(instance.device, commandPool, 1, &commandBuffer);
 }

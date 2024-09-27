@@ -122,7 +122,9 @@ public:
 	const char* vertexPath;
 	const char* fragmentPath;
 	void resetBuffers();
-
+	std::vector<Object*> objects;
+	std::vector<Light*> lights;
+	MaterialBufferObject mbo;
 
 protected:
 
@@ -142,9 +144,7 @@ protected:
 	void updateTextureDescriptors();
 	void deleteTexture(Texture* texture);
 
-	std::vector<Object*> objects;
-	std::vector<Light*> lights;
-	MaterialBufferObject mbo;
+	
 
 	uint32_t materialCount;
 

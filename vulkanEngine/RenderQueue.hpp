@@ -41,12 +41,12 @@ public:
 
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t index);
 	void createSyncObjects();
-
+	void initImGui();
 
 	InstanceVariables instance;
 
 private:
-
+	void ImGuiWindow();
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
 
@@ -59,6 +59,9 @@ private:
 
 	uint32_t currentFrame;
 	const int MAX_FRAMES_IN_FLIGHT = 3;
+
+	VkCommandBuffer beginSingleTimeCommands();
+	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
 	glm::vec3 position;
 	glm::vec3 direction;

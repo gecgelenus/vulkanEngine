@@ -27,7 +27,7 @@
       "Size": 8374976512, 
       "Budget": {
         "BudgetBytes": 7569670144, 
-        "UsageBytes": 873103360
+        "UsageBytes": 917630976
       }, 
       "Stats": {
         "BlockCount": 5, 
@@ -68,7 +68,7 @@
       "Size": 8545173504, 
       "Budget": {
         "BudgetBytes": 7849481319, 
-        "UsageBytes": 48844800
+        "UsageBytes": 73486336
       }, 
       "Stats": {
         "BlockCount": 1, 
@@ -114,8 +114,8 @@
       "Flags": ["DEVICE_LOCAL"], 
       "Size": 224395264, 
       "Budget": {
-        "BudgetBytes": 216956928, 
-        "UsageBytes": 7438336
+        "BudgetBytes": 218480640, 
+        "UsageBytes": 5914624
       }, 
       "Stats": {
         "BlockCount": 1, 

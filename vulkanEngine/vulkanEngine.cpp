@@ -1,12 +1,8 @@
-﻿#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
+﻿
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 
-#include "stb_image_write.h"
 #include <math.h>
 
 
@@ -80,6 +76,8 @@ private:
 		vars.swapchainExtent = swapChainExtent;
 		vars.surface = surface;
 		vars.renderpass = renderPass;
+		vars.minImageCount = minImage;
+		
 		vars.WIDTH = WIDTH;
 		vars.HEIGHT = HEIGHT;
 		vars.allocator = allocator;
@@ -134,7 +132,7 @@ private:
 
 		std::string batchNameText = "TEXTBATCH";
 
-		Light* l1 = new Light();
+		Light* l1 = new Light("Light 1");
 		l1->position = glm::vec4(5.0, 8.0, 5.0, 1.0);
 		l1->color = glm::vec4(1.0, 1.0, 1.0, 250.0);
 
@@ -409,6 +407,7 @@ private:
 		VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+		minImage = swapChainSupport.capabilities.minImageCount;
 
 		if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
 			imageCount = swapChainSupport.capabilities.maxImageCount;
@@ -834,7 +833,7 @@ private:
 	GLFWwindow* window;
 
 	VkSurfaceKHR surface;
-
+	uint32_t minImage;
 	// INSTANCE
 	VkInstance instance;
 
