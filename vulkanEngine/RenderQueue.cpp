@@ -31,6 +31,29 @@ RenderQueue::RenderQueue(InstanceVariables& vars)
 	speed = 3.0f; // 3 units / second
 	mouseSpeed = 1.0f;
 
+
+	xValuesModel.resize(50, std::vector<float>(1000, 0));
+	yValuesModel.resize(50, std::vector<float>(1000, 0));
+	zValuesModel.resize(50, std::vector<float>(1000, 0));
+	scaleValuesModel.resize(50, std::vector<float>(1000, 0));
+	xRotationValuesModel.resize(50, std::vector<float>(1000, 0));
+	yRotationValuesModel.resize(50, std::vector<float>(1000, 0));
+	zRotationValuesModel.resize(50, std::vector<float>(1000, 0));
+
+
+
+
+	sliderValuesLight.resize(50, std::vector<float>(100, 0));
+	
+	sliderValuesLightColorBlue.resize(50, std::vector<float>(100, 0));
+	sliderValuesLightColorGreen.resize(50, std::vector<float>(100, 0));
+	sliderValuesLightColorRed.resize(50, std::vector<float>(100, 0));
+
+	xValuesLight.resize(50, std::vector<float>(100, 0));
+	yValuesLight.resize(50, std::vector<float>(100, 0));
+	zValuesLight.resize(50, std::vector<float>(100, 0));
+
+
 	createCommandPool();
 	createCommandBuffers();
 	createSyncObjects();
@@ -470,26 +493,221 @@ int MyCallback(ImGuiInputTextCallbackData* data) {
 
 void RenderQueue::ImGuiWindow()
 {
+	ImGui::SetNextWindowSizeConstraints(ImVec2(500, 500), ImVec2(1600, 900));
 
-	static float sliderValue = 0.0f;
-
-	static char buffer[128] = "Type here...";
-	if (ImGui::Begin("Example Input")) {
-		ImGui::InputText("Input with callback", buffer, IM_ARRAYSIZE(buffer), ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, MyCallback);
-		for (int bt = 0; bt < batchList.size(); bt++) {
-			for (int l = 0; l < batchList[bt]->lights.size(); l++) {
-				std::string name = batchList[bt]->lights[l]->name + " Power ";
-				if (ImGui::SliderFloat(name.c_str(), &sliderValue, 0.0f, 5000.0f)) {
-					batchList[bt]->lights[l]->color = glm::vec4(batchList[bt]->lights[l]->color.x,
-						batchList[bt]->lights[l]->color.y, batchList[bt]->lights[l]->color.z, sliderValue);
-				}
+	if (ImGui::Begin("Main screen")) {
+		
+		if (ImGui::CollapsingHeader("Lights")) {
+			if (ImGui::TreeNode("Basic")) {
+				showLightsBasic();
+				ImGui::TreePop();
 			}
+
 		}
+
+		if (ImGui::CollapsingHeader("Models")) {
+				showModelsBasic();
+		}
+
+		
+		
 		
 		
 	}
 	
 	ImGui::End();
+}
+
+void RenderQueue::showLightsBasic()
+{
+	for (int bt = 0; bt < batchList.size(); bt++) {
+		for (int l = 0; l < batchList[bt]->lights.size(); l++) {
+			ImGui::SeparatorText(batchList[bt]->lights[l]->name.c_str());
+
+
+			// ------------------ POWER ------------------------------
+
+
+			sliderValuesLight[bt][l] = batchList[bt]->lights[l]->color.a;
+
+			std::string name = batchList[bt]->lights[l]->name + " Power ";
+			if (ImGui::SliderFloat(name.c_str(), &(sliderValuesLight[bt][l]), 0.0f, 5000.0f)) {
+				batchList[bt]->lights[l]->color = glm::vec4(batchList[bt]->lights[l]->color.x,
+					batchList[bt]->lights[l]->color.y, batchList[bt]->lights[l]->color.z, sliderValuesLight[bt][l]);
+			}
+
+
+			// ------------------ COLOR ------------------------------
+
+
+			sliderValuesLightColorRed[bt][l] = batchList[bt]->lights[l]->color.x;
+
+			name = batchList[bt]->lights[l]->name + " Red ";
+			if (ImGui::SliderFloat(name.c_str(), &(sliderValuesLightColorRed[bt][l]), 0.0f, 1.0f)) {
+				batchList[bt]->lights[l]->color = glm::vec4(sliderValuesLightColorRed[bt][l],
+					batchList[bt]->lights[l]->color.y, batchList[bt]->lights[l]->color.z, batchList[bt]->lights[l]->color.a);
+			}
+
+			sliderValuesLightColorBlue[bt][l] = batchList[bt]->lights[l]->color.z;
+
+			name = batchList[bt]->lights[l]->name + " Blue ";
+
+			if (ImGui::SliderFloat(name.c_str(), &(sliderValuesLightColorBlue[bt][l]), 0.0f, 1.0f)) {
+				batchList[bt]->lights[l]->color = glm::vec4(batchList[bt]->lights[l]->color.x,
+					batchList[bt]->lights[l]->color.y, sliderValuesLightColorBlue[bt][l], batchList[bt]->lights[l]->color.a);
+			}
+
+			sliderValuesLightColorGreen[bt][l] = batchList[bt]->lights[l]->color.y;
+
+			name = batchList[bt]->lights[l]->name + " Green ";
+			if (ImGui::SliderFloat(name.c_str(), &(sliderValuesLightColorGreen[bt][l]), 0.0f, 1.0f)) {
+				batchList[bt]->lights[l]->color = glm::vec4(batchList[bt]->lights[l]->color.x,
+					sliderValuesLightColorGreen[bt][l], batchList[bt]->lights[l]->color.z, batchList[bt]->lights[l]->color.a);
+			}
+
+			// ------------------ POSITION ------------------------------
+
+
+			xValuesLight[bt][l] = batchList[bt]->lights[l]->position.x;
+			yValuesLight[bt][l] = batchList[bt]->lights[l]->position.y;
+			zValuesLight[bt][l] = batchList[bt]->lights[l]->position.z;
+
+			name = batchList[bt]->lights[l]->name + " x position";
+
+			if (ImGui::InputFloat(name.c_str(), &(xValuesLight[bt][l]))) {
+				batchList[bt]->lights[l]->position = glm::vec4(xValuesLight[bt][l], batchList[bt]->lights[l]->position.y,
+					batchList[bt]->lights[l]->position.z, batchList[bt]->lights[l]->position.a);
+			}
+
+			name = batchList[bt]->lights[l]->name + " y position";
+
+
+			if (ImGui::InputFloat(name.c_str(), &(yValuesLight[bt][l]))) {
+				batchList[bt]->lights[l]->position = glm::vec4(batchList[bt]->lights[l]->position.x, yValuesLight[bt][l],
+					batchList[bt]->lights[l]->position.z, batchList[bt]->lights[l]->position.a);
+			}
+
+
+			name = batchList[bt]->lights[l]->name + " z position";
+
+
+			if (ImGui::InputFloat(name.c_str(), &(zValuesLight[bt][l]))) {
+				batchList[bt]->lights[l]->position = glm::vec4(batchList[bt]->lights[l]->position.x, batchList[bt]->lights[l]->position.y,
+					zValuesLight[bt][l], batchList[bt]->lights[l]->position.a);
+			}
+
+
+		}
+
+	}
+}
+
+void RenderQueue::showModelsBasic()
+{
+
+	for (int bt = 0; bt < batchList.size(); bt++) {
+		for (int o = 0; o < batchList[bt]->objects.size(); o++) {
+
+			bool updated = false;
+
+			Object* obj = batchList[bt]->objects[o];
+
+			std::string objName = obj->name;
+			if (ImGui::TreeNode(objName.c_str())) {
+
+
+				// --------- POSITION --------------
+
+				xValuesModel[bt][o] = obj->position.x;
+
+				if (ImGui::InputFloat((objName + " x position").c_str(), &(xValuesModel[bt][o]))) {
+					obj->position.x = xValuesModel[bt][o];
+					updated = true;
+				}
+
+				yValuesModel[bt][o] = obj->position.y;
+
+				if (ImGui::InputFloat((objName + " y position").c_str(), &(yValuesModel[bt][o]))) {
+					obj->position.y = yValuesModel[bt][o];
+					updated = true;
+
+				}
+
+				zValuesModel[bt][o] = obj->position.z;
+
+				if (ImGui::InputFloat((objName + " z position").c_str(), &(zValuesModel[bt][o]))) {
+					obj->position.z = zValuesModel[bt][o];
+					updated = true;
+
+				}
+
+				// --------- SCALE --------------
+
+				scaleValuesModel[bt][o] = obj->scale;
+
+				if (ImGui::InputFloat((objName + " scale").c_str(), &(scaleValuesModel[bt][o]))) {
+					obj->scale = scaleValuesModel[bt][o];
+					updated = true;
+				}
+
+				// --------- ROTATION --------------
+
+				xRotationValuesModel[bt][o] = obj->rotationX;
+
+				if (ImGui::SliderFloat((objName + " rotation x").c_str(), &(xRotationValuesModel[bt][o]), -360.0f, 360.0f)) {
+					obj->rotationX = xRotationValuesModel[bt][o];
+					updated = true;
+
+
+				}
+
+				if (ImGui::Button((objName + " reset rotation x").c_str())) {
+					// Call your custom button callback
+					obj->rotationX = 0.0f;
+					updated = true;
+
+				}
+
+				yRotationValuesModel[bt][o] = obj->rotationY;
+
+				if (ImGui::SliderFloat((objName + " rotation y").c_str(), &(yRotationValuesModel[bt][o]), -360.0f, 360.0f)) {
+					obj->rotationY = yRotationValuesModel[bt][o];
+					updated = true;
+
+
+				}
+
+				if (ImGui::Button((objName + " reset rotation y").c_str())) {
+					// Call your custom button callback
+					obj->rotationY = 0.0f;
+					updated = true;
+
+				}
+
+				zRotationValuesModel[bt][o] = obj->rotationZ;
+
+				if (ImGui::SliderFloat((objName + " rotation Z").c_str(), &(zRotationValuesModel[bt][o]), -360.0f, 360.0f)) {
+					obj->rotationZ = zRotationValuesModel[bt][o];
+					updated = true;
+				}
+
+				if (ImGui::Button((objName + " reset rotation z").c_str())) {
+					// Call your custom button callback
+					obj->rotationZ = 0.0f;
+					updated = true;
+
+				}
+
+				if (updated) {
+					obj->updateMatrix();
+				}
+				ImGui::TreePop();
+
+			}
+
+
+		}
+	}
 }
 
 

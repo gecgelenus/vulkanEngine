@@ -136,7 +136,9 @@ private:
 		l1->position = glm::vec4(5.0, 8.0, 5.0, 1.0);
 		l1->color = glm::vec4(1.0, 1.0, 1.0, 250.0);
 
-		
+		Light* l2 = new Light("Light 2");
+		l2->position = glm::vec4(-5.0, 8.0, -5.0, 1.0);
+		l2->color = glm::vec4(1.0, 0.0, 1.0, 250.0);
 
 		Object* sphere1 = new Object("sphere1", "models/sphere.obj");
 		Object* sphere2 = new Object("sphere2", "models/sphere.obj");
@@ -147,15 +149,18 @@ private:
 		
 
 		sphere1->position = l1->position;
-		
+		sphere1->updateMatrix();
 		sphere1->setColor(l1->color);
 		
-
+		sphere2->position = l2->position;
+		sphere1->updateMatrix();
+		sphere2->setColor(l2->color);
 
 		std::string batchName = "asd";
 		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vertFlat.spv", "shaders/fragFlat.spv");
 		batch->addObject(sphere1);
-		
+		batch->addObject(sphere2);
+
 		batch->addObject(well);
 
 
@@ -164,7 +169,8 @@ private:
 		batch->resetBuffers();
 
 		batch->addLight(l1);
-		
+		batch->addLight(l2);
+
 
 		batch->setAmbientLight(glm::vec4(1.0f, 1.0f, 1.0f, 0.2f));
 
@@ -178,7 +184,7 @@ private:
 
 		renderQueue.pushToQueue(batchText);
 
-
+		
 		
 
 

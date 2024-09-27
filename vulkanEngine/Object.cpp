@@ -18,6 +18,8 @@ Object::Object(std::string name, std::vector<Vertex> vertices, std::vector<uint3
 	this->objectID = 0;
 	this->offset = 0;
 	this->materialOffset = 0;
+	this->modelMatrix = glm::mat4(1.0f);
+	this->scale = 1.0f;
 
 	this->properties = {};
 	this->position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -30,7 +32,8 @@ Object::Object(const char* name, std::vector<Vertex> vertices, std::vector<uint3
 	this->indices = indices;
 	this->objectID = 0;
 	this->materialOffset = 0;
-
+	this->modelMatrix = glm::mat4(1.0f);
+	this->scale = 1.0f;
 	this->offset = 0;
 	this->properties = {};
 	this->position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -43,9 +46,10 @@ Object::Object(const char* name, const char* path)
 	this->offset = 0;
 	this->properties = {};
 	this->materialOffset = 0;
+	this->scale = 1.0f;
 
 	this->position = glm::vec3(0.0f, 0.0f, 0.0f);
-
+	this->modelMatrix = glm::mat4(1.0f);
 	loadOBJ(path);
 }
 
@@ -68,6 +72,23 @@ void Object::setMaterialOffset()
 	for (int i = 0; i < vertices.size(); i++) {
 		vertices[i].materialID += materialOffset;
 	}
+}
+
+void Object::updateMatrix()
+{
+	modelMatrix = glm::mat4(1.0f);
+
+	modelMatrix = glm::translate(modelMatrix, position);
+
+	modelMatrix = glm::scale(modelMatrix, glm::vec3(scale));
+
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(rotationX), glm::vec3(1, 0, 0));
+	
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(rotationY), glm::vec3(0, 1, 0));
+	
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(rotationZ), glm::vec3(0, 0, 1));
+
+
 }
 
 void Object::setColor(const glm::vec4& color)

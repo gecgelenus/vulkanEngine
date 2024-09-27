@@ -18,6 +18,8 @@ public:
 	void setID(uint32_t id);
 	void setMaterialOffset();
 
+	void updateMatrix();
+
 	void setColor(const glm::vec4& color);
 	void loadOBJ(const char* path);
 	uint32_t getID();
@@ -33,6 +35,13 @@ public:
 	
 	uint32_t offset;
 	uint32_t materialOffset;
+	float scale;
+	float rotationX;
+	float rotationY;
+	float rotationZ;
+
+	glm::mat4 modelMatrix;
+
 
 
 	objectProperties properties;

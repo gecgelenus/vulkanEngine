@@ -47,6 +47,12 @@ public:
 
 private:
 	void ImGuiWindow();
+
+	void showLightsBasic();
+	void showModelsBasic();
+
+
+
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
 
@@ -77,6 +83,29 @@ private:
 	float speed;
 	float mouseSpeed;
 	float lastTime;
+	
+	// --------- model list --------------
+	std::vector<std::vector<float>> xValuesModel;
+	std::vector<std::vector<float>> yValuesModel;
+	std::vector<std::vector<float>> zValuesModel;
+
+	std::vector<std::vector<float>> scaleValuesModel;
+	std::vector<std::vector<float>> xRotationValuesModel;
+	std::vector<std::vector<float>> yRotationValuesModel;
+	std::vector<std::vector<float>> zRotationValuesModel;
+
+
+	// --------- light list --------------
+
+	std::vector<std::vector<float>> sliderValuesLight;
+	std::vector<std::vector<float>> sliderValuesLightColorRed;
+	std::vector<std::vector<float>> sliderValuesLightColorGreen;
+	std::vector<std::vector<float>> sliderValuesLightColorBlue;
+
+	std::vector<std::vector<float>> xValuesLight;
+	std::vector<std::vector<float>> yValuesLight;
+	std::vector<std::vector<float>> zValuesLight;
+
 
 
 };

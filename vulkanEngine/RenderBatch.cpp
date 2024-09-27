@@ -743,7 +743,7 @@ void RenderBatch::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position,
 	}
 
 	for (Object* obj : objects) {
-		ubo.model[propertyArray[obj->getID()].objectID] = glm::translate(glm::mat4(1.0f), obj->position);
+		ubo.model[propertyArray[obj->getID()].objectID] = obj->modelMatrix;
 	}
 
 	ubo.view = glm::lookAt(position, position + direction, up);
