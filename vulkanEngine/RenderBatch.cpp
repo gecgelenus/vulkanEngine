@@ -12,7 +12,7 @@ RenderBatch::RenderBatch()
 RenderBatch::RenderBatch(std::string& name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath)
 {
 	this->name = name;
-
+	this->renderFlag = true;
 
     this->instance = vars.instance;
     this->device = vars.device;
@@ -553,7 +553,7 @@ void RenderBatch::addTexture(Texture* texture)
 	textures.push_back(texture);
 	texture->textureID = textureViews.size();
 	textureViews.push_back(texture->getImageView());
-
+	textureMap.insert(std::pair<std::string, int>(texture->path, texture->textureID));
 	updateTextureDescriptors();
 }
 
@@ -731,7 +731,7 @@ void RenderBatch::createTextureSampler()
 	}
 }
 
-void RenderBatch::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up)
+void RenderBatch::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up, float FOV, float nearPlane, float farPlane)
 {
 
 	std::vector<objectProperties> propertyArray(1000);
@@ -748,7 +748,7 @@ void RenderBatch::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position,
 
 	ubo.view = glm::lookAt(position, position + direction, up);
 
-	ubo.proj = glm::perspective(glm::radians(45.0f), WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+	ubo.proj = glm::perspective(glm::radians(FOV), WIDTH / (float)HEIGHT, nearPlane, farPlane);
 
 	ubo.proj[1][1] *= -1;
 
@@ -1182,6 +1182,9 @@ void RenderBatch::updateTextureDescriptors()
 		vkUpdateDescriptorSets(device, 1, &descriptorWriteTex, 0, nullptr);
 	}
 }
+
+
+
 
 void RenderBatch::deleteTexture(Texture* texture)
 {

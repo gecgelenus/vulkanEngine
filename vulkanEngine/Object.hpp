@@ -2,7 +2,7 @@
 #include "Util.hpp"
 #include <vector>
 #include <string>
-
+#include <unordered_map>
 
 
 class Object {
@@ -10,7 +10,7 @@ public:
 	Object();
 	Object(std::string name, std::vector<Vertex> vertices, std::vector<uint32_t> indices);
 	Object(const char* name, std::vector<Vertex> vertices, std::vector<uint32_t> indices);
-	Object(const char* name, const char* path);
+	Object(const char* name, const char* path, std::unordered_map<std::string, int>& textureMap);
 
 	~Object();
 
@@ -31,7 +31,7 @@ public:
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 	std::vector<Material> materials;
-
+	std::unordered_map<std::string, int> textureMap;
 	
 	uint32_t offset;
 	uint32_t materialOffset;

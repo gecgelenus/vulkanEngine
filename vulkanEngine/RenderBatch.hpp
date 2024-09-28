@@ -6,6 +6,7 @@
 #include "Object.hpp"
 #include "Texture.hpp"
 #include "Light.hpp"
+#include <unordered_map>
 
 
 class RenderBatch {
@@ -41,10 +42,11 @@ public:
 	void createDescriptorSetLayout();
 	void allocateDescriptorSets();
 	void createTextureSampler();
-	void updateUniformBuffer(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up);
+	void updateUniformBuffer(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up, float FOV, float nearPlane, float farPlane);
 	void updateLightBuffer(uint32_t targetFrame);
 	void createGraphicsPipeline();
 
+	std::unordered_map<std::string, int> textureMap;
 
 	std::string name;
 
@@ -77,6 +79,8 @@ public:
 
 	VkExtent2D swapChainExtent;
 
+
+	bool renderFlag;
 
 	std::vector<Vertex> vertices;
 

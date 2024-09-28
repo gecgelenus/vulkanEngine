@@ -66,7 +66,6 @@ struct Vertex {
 	glm::vec2 texCoord;
 	glm::uint32 ID;
 	glm::uint32 materialID;
-
 };
 
 struct CharInfo {

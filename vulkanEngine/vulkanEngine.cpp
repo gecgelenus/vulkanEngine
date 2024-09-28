@@ -11,6 +11,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <unordered_map>
 
 #include <chrono>
 #include <iostream>
@@ -86,7 +87,7 @@ private:
 
 		
 
-		std::ifstream t("fonts/sansa_32.fnt");
+		std::ifstream t("textures/fonts/sansa_32.fnt");
 		std::stringstream buffer;
 		buffer << t.rdbuf();
 
@@ -100,27 +101,38 @@ private:
 		std::cout << "Number of Kernings: " << font.kernings.size() << "\n";
 
 
+		std::string texturePathBag = "Scene_-_Root_baseColor.jpeg";
+		std::string texturePathCar1 = "aerial_asphalt_01_diff_2k.jpeg";
+		std::string texturePathCar2 = "aerial_asphalt_01_rough_2k@channels=G.png";
+		std::string texturePathCar3 = "Decals.png";
+		std::string texturePathCar4 = "Frond_1_Mat_Color-Frond_1_Mat_Opacity.png";
+		std::string texturePathCar5 = "Trim_Plane_Ground_BaseColor.png";
+
+
 		
+
+		Texture* bagTexture = new Texture(allocator, device, commandPool, graphicsQueue, texturePathBag, true);
 		
-
-		
-
-
-		ObjectText* obj = new ObjectText("a", font);
-		
-		std::string text = "Cursor enabled";
-
-
-		float xPos = 10;
-		float yPos = 10;
-
-
-		obj->setText(text, xPos, yPos);
 
 
 		std::string texturePathText = "fonts/sansa_32_0.png";
 
 		Texture* textureText = new Texture(allocator, device, commandPool, graphicsQueue, texturePathText, false);
+
+
+
+		std::string batchName = "well batch";
+
+
+		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vertFlat.spv", "shaders/fragFlat.spv");
+		batch->addTexture(bagTexture);
+		
+
+
+
+		batchName = "light batch";
+		RenderBatch* batchLight = new RenderBatch(batchName, vars, "shaders/vertFlat.spv", "shaders/fragFlat.spv");
+
 
 		
 
@@ -130,7 +142,6 @@ private:
 
 		RenderQueue renderQueue(vars);
 
-		std::string batchNameText = "TEXTBATCH";
 
 		Light* l1 = new Light("Light 1");
 		l1->position = glm::vec4(5.0, 8.0, 5.0, 1.0);
@@ -140,12 +151,19 @@ private:
 		l2->position = glm::vec4(-5.0, 8.0, -5.0, 1.0);
 		l2->color = glm::vec4(1.0, 0.0, 1.0, 250.0);
 
-		Object* sphere1 = new Object("sphere1", "models/sphere.obj");
-		Object* sphere2 = new Object("sphere2", "models/sphere.obj");
-		Object* sphere3 = new Object("sphere3", "models/sphere.obj");
-		Object* sphere4 = new Object("sphere4", "models/sphere.obj");
-		Object* well = new Object("well", "models/well.obj");
+		Object* sphere1 = new Object("sphere1", "models/sphere.obj", batch->textureMap);
+		Object* sphere2 = new Object("sphere2", "models/sphere.obj", batch->textureMap);
+		Object* sphere3 = new Object("sphere3", "models/sphere.obj", batch->textureMap);
+		Object* sphere4 = new Object("sphere4", "models/sphere.obj", batch->textureMap);
+		Object* well = new Object("bag", "models/bag.obj", batch->textureMap);
+		Object* car = new Object("car", "models/car.obj", batch->textureMap);
+
 		well->setColor(glm::vec4(1.0f));
+		well->scale = 0.1f;
+		well->updateMatrix();
+
+		car->position = glm::vec3(10.0f, 0.0f, 10.0f);
+		
 		
 
 		sphere1->position = l1->position;
@@ -156,31 +174,39 @@ private:
 		sphere1->updateMatrix();
 		sphere2->setColor(l2->color);
 
-		std::string batchName = "asd";
-		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vertFlat.spv", "shaders/fragFlat.spv");
-		batch->addObject(sphere1);
-		batch->addObject(sphere2);
-
-		batch->addObject(well);
-
-
 		
 
-		batch->resetBuffers();
+		
+		
+		batch->addObject(sphere1);
+		batch->addObject(sphere2);
+		batch->addObject(well);
+		batch->addObject(car);
 
+		batch->resetBuffers();
 		batch->addLight(l1);
 		batch->addLight(l2);
-
-
 		batch->setAmbientLight(glm::vec4(1.0f, 1.0f, 1.0f, 0.2f));
 
-		RenderBatchText* batchText = new RenderBatchText(batchName, vars, "shaders/vertText.spv", "shaders/fragText.spv");
-		batchText->addObject(obj);
+		
+		batchLight->addObject(sphere1);
+		batchLight->addObject(sphere2);
+		batchLight->resetBuffers();
+		batchLight->addLight(l1);
+		batchLight->addLight(l2);
+		batchLight->setAmbientLight(glm::vec4(1.0f, 1.0f, 1.0f, 0.2f));
 
-		batchText->addTexture(textureText);
-		batchText->setObjectTexture(obj->name, textureText);
-		batchText->resetBuffers();
+
+
+
+		batchName = "guiBatch";
+
+		RenderBatchText* batchText = new RenderBatchText(batchName, vars, "shaders/vertText.spv", "shaders/fragText.spv");
+	
+	
 		renderQueue.pushToQueue(batch);
+		renderQueue.pushToQueue(batchLight);
+
 
 		renderQueue.pushToQueue(batchText);
 

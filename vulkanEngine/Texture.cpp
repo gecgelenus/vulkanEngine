@@ -13,10 +13,10 @@ Texture::Texture(VmaAllocator allocator, VkDevice device, VkCommandPool commandP
 	this->device = device;
 	this->commandPool = commandPool;
 	this->queue = queue;
-
+	this->path = path;
 	int texWidth, texHeight, texChannels;
 	stbi_set_flip_vertically_on_load(flip);
-	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	stbi_uc* pixels = stbi_load(("textures/" + path).c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
 	if (!pixels) {

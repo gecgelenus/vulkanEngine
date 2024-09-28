@@ -1,0 +1,55 @@
+# Blender 4.2.1 LTS MTL File: 'DriftTrack3.blend'
+# www.blender.org
+
+newmtl Asphalt
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd C:/aerial_asphalt_01_diff_2k.jpeg
+map_Ns C:/aerial_asphalt_01_rough_2k.jpeg
+map_Bump -bm 1.000000 C:/aerial_asphalt_01_nor_gl_2k.exr
+
+newmtl Decals
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.056391 0.056391 0.056391
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd C:/Decals.png
+
+newmtl Ground
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd C:/Trim_Plane_Ground_BaseColor.png
+map_Ns C:/Trim_Plane_Ground_Roughness.png
+map_Bump -bm 1.000000 C:/Trim_Plane_Ground_Normal.png
+
+newmtl Leafs_Mat
+Ns 200.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 1
+map_Kd C:/aerial_asphalt_01_diff_2k.jpeg
+map_d C:/Bush_Opacity.png
+map_Bump -bm 1.000000 C:/Bush_Normal.png
+
+newmtl Metal
+Ns 559.843567
+Ka 1.000000 1.000000 1.000000
+Kd 0.507069 0.507069 0.507069
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3

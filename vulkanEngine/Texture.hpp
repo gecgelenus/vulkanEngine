@@ -17,7 +17,7 @@ public:
 	VkImageView getImageView() { return textureImageView; };
 
 	uint32_t textureID;
-
+	std::string path;
 
 
 private:

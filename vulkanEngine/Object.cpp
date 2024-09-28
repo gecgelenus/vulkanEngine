@@ -39,7 +39,7 @@ Object::Object(const char* name, std::vector<Vertex> vertices, std::vector<uint3
 	this->position = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
-Object::Object(const char* name, const char* path)
+Object::Object(const char* name, const char* path, std::unordered_map<std::string, int>& textureMap)
 {
 	this->name = name;
 	this->objectID = 0;
@@ -47,6 +47,7 @@ Object::Object(const char* name, const char* path)
 	this->properties = {};
 	this->materialOffset = 0;
 	this->scale = 1.0f;
+	this->textureMap = textureMap;
 
 	this->position = glm::vec3(0.0f, 0.0f, 0.0f);
 	this->modelMatrix = glm::mat4(1.0f);
@@ -133,7 +134,7 @@ void Object::loadOBJ(const char* path)
 	auto& shapes = reader.GetShapes();
 	auto& objMaterials = reader.GetMaterials();
 
-
+	this->materials.reserve(100);
 
 	// Load materials
 	for (const auto& mat : objMaterials) {
@@ -143,9 +144,28 @@ void Object::loadOBJ(const char* path)
 		tmpMaterial.specular = { mat.specular[0], mat.specular[1], mat.specular[2] };
 		tmpMaterial.shininess = mat.shininess;
 		tmpMaterial.transparency = mat.dissolve;  // Transparency (1.0 - dissolve)
+		
+
+		std::string diffuse_texname = mat.diffuse_texname;
+		if (!diffuse_texname.empty()) {
+			std::stringstream test(mat.diffuse_texname);
+			std::string segment;
+			std::vector<std::string> seglist;
+
+			while (std::getline(test, segment, '/'))
+			{
+				seglist.push_back(segment);
+			}
+
+			std::cout << seglist[seglist.size() - 1] << std::endl;
+			tmpMaterial.textureID = static_cast<uint32_t>(textureMap.at(seglist[seglist.size() - 1]));
+
+		}
+		
+
 
 		
-		materials.push_back(tmpMaterial);
+		this->materials.push_back(tmpMaterial);
 	}
 
 
@@ -185,6 +205,7 @@ void Object::loadOBJ(const char* path)
 				// tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
 				tmpVertex.ID = 1;
 				tmpVertex.materialID = static_cast<uint32_t>(material_id);
+				
 				vertices.push_back(tmpVertex);
 
 				// Store the vertex index in the index buffer

@@ -28,8 +28,13 @@ RenderQueue::RenderQueue(InstanceVariables& vars)
 	// vertical angle : 0, look at the horizon
 	verticalAngle = 0.0f;
 
-	speed = 3.0f; // 3 units / second
+	speed = 6.0f; // 3 units / second
 	mouseSpeed = 1.0f;
+
+	FOV = 45.0f; // in degrees
+	nearPlane = 0.1f;
+	farPlane = 500.0f;
+
 
 
 	xValuesModel.resize(50, std::vector<float>(1000, 0));
@@ -157,13 +162,14 @@ void RenderQueue::drawFrame()
 		calculateViewVectors();
 	}
 	for (RenderBatch* b : batchList) {
-		b->updateUniformBuffer(imageIndex, position, direction, up);
-		b->updateLightBuffer(imageIndex);
-	}
-	if (stateUI) {
-		for (RenderBatchText* b : batchListText) {
-			b->updateUniformBuffer(imageIndex, position, direction, up);
+		if (b->renderFlag) {
+			b->updateUniformBuffer(imageIndex, position, direction, up, FOV, nearPlane, farPlane);
+			b->updateLightBuffer(imageIndex);
 		}
+		
+	}
+	for (RenderBatchText* b : batchListText) {
+		b->updateUniformBuffer(imageIndex, position, direction, up);
 	}
 	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 	vkResetFences(instance.device, 1, &inFlightFences[currentFrame]);
@@ -351,29 +357,28 @@ void RenderQueue::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t in
 
 
 	for (int i = 0; i < batchList.size(); i++) {
-
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchList[i]->graphicsPipeline);
-
-
-		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+		if (batchList[i]->renderFlag) {
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchList[i]->graphicsPipeline);
 
 
-		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-		VkBuffer vertexBuffers[] = { batchList[i]->vertexBuffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-		vkCmdBindIndexBuffer(commandBuffer, batchList[i]->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-		VkDescriptorSet sets[] = { batchList[i]->descriptorSets[currentFrame] , batchList[i]->descriptorSetsLight[currentFrame] };
+			VkBuffer vertexBuffers[] = { batchList[i]->vertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchList[i]->pipelineLayout, 0, 2, sets, 0, nullptr);
+			vkCmdBindIndexBuffer(commandBuffer, batchList[i]->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(batchList[i]->indices.size()), 1, 0, 0, 0);
+			VkDescriptorSet sets[] = { batchList[i]->descriptorSets[currentFrame] , batchList[i]->descriptorSetsLight[currentFrame] };
 
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchList[i]->pipelineLayout, 0, 2, sets, 0, nullptr);
+
+			vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(batchList[i]->indices.size()), 1, 0, 0, 0);
+		}
 	}
-	if (stateUI) {
 		for (int i = 0; i < batchListText.size(); i++) {
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchListText[i]->graphicsPipeline);
@@ -404,7 +409,6 @@ void RenderQueue::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t in
 			ImGui::Render();
 
 			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
-		}
 	}
 
 	vkCmdEndRenderPass(commandBuffer);
@@ -509,7 +513,13 @@ void RenderQueue::ImGuiWindow()
 				showModelsBasic();
 		}
 
-		
+		if (ImGui::CollapsingHeader("Camera")) {
+			showCameraSettings();
+		}
+
+		if (ImGui::CollapsingHeader("Pipelines")) {
+			showPipelines();
+		}
 		
 		
 		
@@ -530,7 +540,7 @@ void RenderQueue::showLightsBasic()
 
 			sliderValuesLight[bt][l] = batchList[bt]->lights[l]->color.a;
 
-			std::string name = batchList[bt]->lights[l]->name + " Power ";
+			std::string name = batchList[bt]->name + batchList[bt]->lights[l]->name + " Power ";
 			if (ImGui::SliderFloat(name.c_str(), &(sliderValuesLight[bt][l]), 0.0f, 5000.0f)) {
 				batchList[bt]->lights[l]->color = glm::vec4(batchList[bt]->lights[l]->color.x,
 					batchList[bt]->lights[l]->color.y, batchList[bt]->lights[l]->color.z, sliderValuesLight[bt][l]);
@@ -542,7 +552,7 @@ void RenderQueue::showLightsBasic()
 
 			sliderValuesLightColorRed[bt][l] = batchList[bt]->lights[l]->color.x;
 
-			name = batchList[bt]->lights[l]->name + " Red ";
+			name = batchList[bt]->name + batchList[bt]->lights[l]->name + " Red ";
 			if (ImGui::SliderFloat(name.c_str(), &(sliderValuesLightColorRed[bt][l]), 0.0f, 1.0f)) {
 				batchList[bt]->lights[l]->color = glm::vec4(sliderValuesLightColorRed[bt][l],
 					batchList[bt]->lights[l]->color.y, batchList[bt]->lights[l]->color.z, batchList[bt]->lights[l]->color.a);
@@ -550,7 +560,7 @@ void RenderQueue::showLightsBasic()
 
 			sliderValuesLightColorBlue[bt][l] = batchList[bt]->lights[l]->color.z;
 
-			name = batchList[bt]->lights[l]->name + " Blue ";
+			name = batchList[bt]->name + batchList[bt]->lights[l]->name + " Blue ";
 
 			if (ImGui::SliderFloat(name.c_str(), &(sliderValuesLightColorBlue[bt][l]), 0.0f, 1.0f)) {
 				batchList[bt]->lights[l]->color = glm::vec4(batchList[bt]->lights[l]->color.x,
@@ -559,7 +569,7 @@ void RenderQueue::showLightsBasic()
 
 			sliderValuesLightColorGreen[bt][l] = batchList[bt]->lights[l]->color.y;
 
-			name = batchList[bt]->lights[l]->name + " Green ";
+			name = batchList[bt]->name + batchList[bt]->lights[l]->name + " Green ";
 			if (ImGui::SliderFloat(name.c_str(), &(sliderValuesLightColorGreen[bt][l]), 0.0f, 1.0f)) {
 				batchList[bt]->lights[l]->color = glm::vec4(batchList[bt]->lights[l]->color.x,
 					sliderValuesLightColorGreen[bt][l], batchList[bt]->lights[l]->color.z, batchList[bt]->lights[l]->color.a);
@@ -572,14 +582,14 @@ void RenderQueue::showLightsBasic()
 			yValuesLight[bt][l] = batchList[bt]->lights[l]->position.y;
 			zValuesLight[bt][l] = batchList[bt]->lights[l]->position.z;
 
-			name = batchList[bt]->lights[l]->name + " x position";
+			name = batchList[bt]->name + batchList[bt]->lights[l]->name + " x position";
 
 			if (ImGui::InputFloat(name.c_str(), &(xValuesLight[bt][l]))) {
 				batchList[bt]->lights[l]->position = glm::vec4(xValuesLight[bt][l], batchList[bt]->lights[l]->position.y,
 					batchList[bt]->lights[l]->position.z, batchList[bt]->lights[l]->position.a);
 			}
 
-			name = batchList[bt]->lights[l]->name + " y position";
+			name = batchList[bt]->name + batchList[bt]->name + batchList[bt]->lights[l]->name + " y position";
 
 
 			if (ImGui::InputFloat(name.c_str(), &(yValuesLight[bt][l]))) {
@@ -588,7 +598,7 @@ void RenderQueue::showLightsBasic()
 			}
 
 
-			name = batchList[bt]->lights[l]->name + " z position";
+			name = batchList[bt]->name + batchList[bt]->lights[l]->name + " z position";
 
 
 			if (ImGui::InputFloat(name.c_str(), &(zValuesLight[bt][l]))) {
@@ -708,6 +718,80 @@ void RenderQueue::showModelsBasic()
 
 		}
 	}
+}
+
+void RenderQueue::showCameraSettings()
+{
+	if (ImGui::TreeNode("Camera settings")) {
+
+		if (ImGui::SliderFloat("Camera speed", &speed, 0.0f, 50.0f)) {
+			// snapping can be done if needed
+		}
+
+		if (ImGui::SliderFloat("Mouse speed", &mouseSpeed, 0.0f, 5.0f)) {
+			// snapping can be done if needed
+		}
+
+		if (ImGui::SliderFloat("FOV", &FOV, 30.0f, 120.0f)) {
+			// snapping can be done if needed
+		}
+
+		if (ImGui::SliderFloat("Near plane", &nearPlane, 0.0f, 5.0f)) {
+			// snapping can be done if needed
+		}
+
+		if (ImGui::SliderFloat("Far Plane", &farPlane, 100.0f, 2000.0f)) {
+			// snapping can be done if needed
+		}
+		
+		std::string tmpText = "X position: " + std::to_string(position.x);
+
+		ImGui::Text(tmpText.c_str());
+
+		tmpText = "Y position: " + std::to_string(position.y);
+
+		ImGui::Text(tmpText.c_str());
+
+		tmpText = "Z position: " + std::to_string(position.z);
+
+		ImGui::Text(tmpText.c_str());
+
+		tmpText = "Horizontal angle: " + std::to_string(horizontalAngle);
+
+		ImGui::Text(tmpText.c_str());
+
+		tmpText = "Vertical angle: " + std::to_string(verticalAngle);
+
+		ImGui::Text(tmpText.c_str());
+
+
+		ImGui::TreePop();
+	}
+
+
+}
+
+void RenderQueue::showPipelines()
+{
+	for (int bt = 0; bt < batchList.size(); bt++) {
+		RenderBatch* batch = batchList[bt];
+		
+
+		if (ImGui::TreeNode(batch->name.c_str())) {
+
+			if (ImGui::Checkbox(("Use " + batch->name).c_str(), &(batch->renderFlag))) {
+				// Handle additional callback here
+			}
+
+
+
+			ImGui::TreePop();
+		}
+
+
+
+	}
+
 }
 
 

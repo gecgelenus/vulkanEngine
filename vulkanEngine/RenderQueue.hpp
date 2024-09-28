@@ -48,9 +48,12 @@ public:
 private:
 	void ImGuiWindow();
 
+	// ---------- gui groups -----------
+
 	void showLightsBasic();
 	void showModelsBasic();
-
+	void showCameraSettings();
+	void showPipelines();
 
 
 	VkCommandPool commandPool;
@@ -72,6 +75,10 @@ private:
 	glm::vec3 position;
 	glm::vec3 direction;
 	glm::vec3 up;
+
+	float FOV;
+	float nearPlane;
+	float farPlane;
 
 	float horizontalAngle;
 	float verticalAngle;
