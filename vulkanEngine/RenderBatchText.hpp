@@ -14,8 +14,8 @@ public:
 	ObjectText* getObject(std::string& name);
 	
 	void createGraphicsPipeline();
-	void createVertexBuffer();
-	void createIndexBuffer();
+	void createVertexBuffer(uint32_t bufferSize);
+	void createIndexBuffer(uint32_t bufferSize);
 	void createUniformBuffers();
 	void createDescriptorSetLayout();
 	void createDescriptorPool();
@@ -28,6 +28,11 @@ public:
 	void resetBuffers();
 
 protected:
+
+	void updateGpuBuffers();
+	uint32_t vertexBufferSize;
+	uint32_t indexBufferSize;
+
 	std::vector<Vertex2D> vertices;
 	std::vector<ObjectText*> objects;
 

@@ -124,7 +124,7 @@ private:
 		std::string batchName = "well batch";
 
 
-		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vertFlat.spv", "shaders/fragFlat.spv");
+		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vert.spv", "shaders/frag.spv");
 		batch->addTexture(bagTexture);
 		
 
@@ -156,13 +156,13 @@ private:
 		Object* sphere3 = new Object("sphere3", "models/sphere.obj", batch->textureMap);
 		Object* sphere4 = new Object("sphere4", "models/sphere.obj", batch->textureMap);
 		Object* well = new Object("bag", "models/bag.obj", batch->textureMap);
-		Object* car = new Object("car", "models/car.obj", batch->textureMap);
+		//Object* car = new Object("car", "models/car.obj", batch->textureMap);
 
 		well->setColor(glm::vec4(1.0f));
 		well->scale = 0.1f;
 		well->updateMatrix();
 
-		car->position = glm::vec3(10.0f, 0.0f, 10.0f);
+		//car->position = glm::vec3(10.0f, 0.0f, 10.0f);
 		
 		
 
@@ -181,7 +181,7 @@ private:
 		batch->addObject(sphere1);
 		batch->addObject(sphere2);
 		batch->addObject(well);
-		batch->addObject(car);
+		//batch->addObject(car);
 
 		batch->resetBuffers();
 		batch->addLight(l1);

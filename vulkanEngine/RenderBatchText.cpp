@@ -27,6 +27,8 @@ RenderBatchText::RenderBatchText(std::string& name, InstanceVariables& vars, con
 	this->vertexPath = vertexPath;
 	this->fragmentPath = fragmentPath;
 	this->allocator = vars.allocator;
+	this->vertexBufferSize = STORAGE_MB * 10;
+	this->indexBufferSize = STORAGE_MB * 10;
 
 	createCommandPool();
 	createCommandBuffers();
@@ -35,9 +37,10 @@ RenderBatchText::RenderBatchText(std::string& name, InstanceVariables& vars, con
 	allocateDescriptorSets();
 	createTextureSampler();
 	createGraphicsPipeline();
-	createVertexBuffer();
-	createIndexBuffer();
 	createUniformBuffers();
+	createVertexBuffer(vertexBufferSize);
+	createIndexBuffer(indexBufferSize);
+
 }
 
 void RenderBatchText::addObject(ObjectText* obj)
@@ -54,43 +57,7 @@ void RenderBatchText::addObject(ObjectText* obj)
 
 	this->objects.push_back(obj);
 
-	// VERTEX
-
-	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-	VkBuffer stagingBuffer;
-	VmaAllocation stagingBufferAllocation;
-
-	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-		VMA_ALLOCATION_CREATE_MAPPED_BIT,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		stagingBuffer, stagingBufferAllocation);
-
-	void* data;
-	vmaMapMemory(allocator, stagingBufferAllocation, &data);
-	memcpy(data, vertices.data(), (size_t)bufferSize);
-	vmaUnmapMemory(allocator, stagingBufferAllocation);
-
-	copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-
-	vmaFreeMemory(allocator, stagingBufferAllocation);
-
-	// INDEX
-
-	bufferSize = sizeof(indices[0]) * indices.size();
-
-	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-		VMA_ALLOCATION_CREATE_MAPPED_BIT,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		stagingBuffer, stagingBufferAllocation);
-
-	void* data2;
-	vmaMapMemory(allocator, stagingBufferAllocation, &data2);
-	memcpy(data2, indices.data(), (size_t)bufferSize);
-	vmaUnmapMemory(allocator, stagingBufferAllocation);
-
-	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-
-	vmaFreeMemory(allocator, stagingBufferAllocation);
+	updateGpuBuffers();
 
 	std::cout << "Object is added to render batch (text): " << obj->name << std::endl;
 
@@ -315,21 +282,19 @@ void RenderBatchText::createGraphicsPipeline()
 
 }
 
-void RenderBatchText::createVertexBuffer()
+void RenderBatchText::createVertexBuffer(uint32_t bufferSize)
 {
-	VkDeviceSize bufferSize = STORAGE_MB * 50;
 
-	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+	createBuffer((VkDeviceSize)bufferSize, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		vertexBuffer, vertexBufferAllocation);
 }
 
-void RenderBatchText::createIndexBuffer()
+void RenderBatchText::createIndexBuffer(uint32_t bufferSize)
 {
-	VkDeviceSize bufferSize = STORAGE_MB * 10;
 
 
-	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+	createBuffer((VkDeviceSize)bufferSize, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		indexBuffer, indexBufferAllocation);
 }
@@ -513,9 +478,29 @@ void RenderBatchText::resetBuffers()
 		}
 	}
 
-	// VERTEX
+	updateGpuBuffers();
+}
+
+void RenderBatchText::updateGpuBuffers()
+{
+
+	std::cout << "YOU ARE UPDATING TEXT BATCH GPU BUFFERS, DONT UPDATE IF IMGUI USES IT!! BATCH NAME: " << this->name << std::endl;
 
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+	if (vertexBufferSize != bufferSize) {
+
+		if (vertexBufferSize != 0) {
+			vmaDestroyBuffer(allocator,vertexBuffer ,vertexBufferAllocation);
+		}
+		vertexBufferSize = bufferSize;
+
+		createVertexBuffer(vertexBufferSize);
+	}
+
+
+	// VERTEX
+
 	VkBuffer stagingBuffer;
 	VmaAllocation stagingBufferAllocation;
 
@@ -529,6 +514,7 @@ void RenderBatchText::resetBuffers()
 	memcpy(data, vertices.data(), (size_t)bufferSize);
 	vmaUnmapMemory(allocator, stagingBufferAllocation);
 
+
 	copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
 	vmaFreeMemory(allocator, stagingBufferAllocation);
@@ -537,12 +523,24 @@ void RenderBatchText::resetBuffers()
 
 	bufferSize = sizeof(indices[0]) * indices.size();
 
+	if (indexBufferSize != bufferSize) {
+
+		if (indexBufferSize != 0) {
+			vmaDestroyBuffer(allocator, indexBuffer, indexBufferAllocation);
+
+		}
+		indexBufferSize = bufferSize;
+
+		createIndexBuffer(indexBufferSize);
+	}
+
 	createBuffer(bufferSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
 		VMA_ALLOCATION_CREATE_MAPPED_BIT,
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		stagingBuffer, stagingBufferAllocation);
 
 	void* data2;
+
 	vmaMapMemory(allocator, stagingBufferAllocation, &data2);
 	memcpy(data2, indices.data(), (size_t)bufferSize);
 	vmaUnmapMemory(allocator, stagingBufferAllocation);
@@ -550,4 +548,6 @@ void RenderBatchText::resetBuffers()
 	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
 	vmaFreeMemory(allocator, stagingBufferAllocation);
+
+
 }

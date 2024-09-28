@@ -137,6 +137,9 @@ void RenderQueue::updateCommandBuffers()
 
 void RenderQueue::drawFrame()
 {
+
+
+	if (!glfwGetWindowAttrib(instance.window, GLFW_ICONIFIED)) {
 	vkWaitForFences(instance.device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 	uint32_t imageIndex;
@@ -156,41 +159,40 @@ void RenderQueue::drawFrame()
 	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
-
-
-	if (!stateUI) {
-		calculateViewVectors();
-	}
-	for (RenderBatch* b : batchList) {
-		if (b->renderFlag) {
-			b->updateUniformBuffer(imageIndex, position, direction, up, FOV, nearPlane, farPlane);
-			b->updateLightBuffer(imageIndex);
+	
+		if (!stateUI) {
+			calculateViewVectors();
 		}
-		
+		for (RenderBatch* b : batchList) {
+			if (b->renderFlag) {
+				b->updateUniformBuffer(imageIndex, position, direction, up, FOV, nearPlane, farPlane);
+				b->updateLightBuffer(imageIndex);
+			}
+
+		}
+		for (RenderBatchText* b : batchListText) {
+			b->updateUniformBuffer(imageIndex, position, direction, up);
+		}
+		recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+		vkResetFences(instance.device, 1, &inFlightFences[currentFrame]);
+
+		if (vkQueueSubmit(instance.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to submit draw command buffer!");
+		}
+
+		VkPresentInfoKHR presentInfo{};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = signalSemaphores;
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = swapChains;
+		presentInfo.pImageIndices = &imageIndex;
+		presentInfo.pResults = nullptr; // Optional
+
+		vkQueuePresentKHR(instance.presentQueue, &presentInfo);
+		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
-	for (RenderBatchText* b : batchListText) {
-		b->updateUniformBuffer(imageIndex, position, direction, up);
-	}
-	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
-	vkResetFences(instance.device, 1, &inFlightFences[currentFrame]);
-
-	if (vkQueueSubmit(instance.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-		throw std::runtime_error("failed to submit draw command buffer!");
-	}
-
-	VkPresentInfoKHR presentInfo{};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = signalSemaphores;
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = swapChains;
-	presentInfo.pImageIndices = &imageIndex;
-	presentInfo.pResults = nullptr; // Optional
-
-	vkQueuePresentKHR(instance.presentQueue, &presentInfo);
-	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-
 
 
 }

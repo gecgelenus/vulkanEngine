@@ -106,8 +106,6 @@ void Object::loadOBJ(const char* path)
 	vertices.clear();
 	indices.clear();
 
-	vertices.reserve(5000000);
-	indices.reserve(5000000);
 
 
 
@@ -133,6 +131,10 @@ void Object::loadOBJ(const char* path)
 	auto& attrib = reader.GetAttrib();
 	auto& shapes = reader.GetShapes();
 	auto& objMaterials = reader.GetMaterials();
+
+	uint32_t vertexCount = 0;
+
+	
 
 	this->materials.reserve(100);
 
@@ -168,6 +170,8 @@ void Object::loadOBJ(const char* path)
 		this->materials.push_back(tmpMaterial);
 	}
 
+
+	std::unordered_map<Vertex, int, VertexHash> vertexMap;
 
 	// Loop over shapes
 	for (size_t s = 0; s < shapes.size(); s++) {
@@ -206,10 +210,31 @@ void Object::loadOBJ(const char* path)
 				tmpVertex.ID = 1;
 				tmpVertex.materialID = static_cast<uint32_t>(material_id);
 				
-				vertices.push_back(tmpVertex);
+				if (vertices.capacity() <= vertices.size() + 1) {
+					vertices.reserve(vertices.size() + 1000);
+				}
+
+				if (indices.capacity() <= indices.size() + 1) {
+					indices.reserve(indices.size() + 1000);
+				}
+
+
+				auto const& it = vertexMap.find(tmpVertex);
+
+				if (it ==  vertexMap.end()) {
+					
+					vertexMap.insert(std::pair<Vertex, int>(tmpVertex, vertices.size()));
+					indices.push_back(static_cast<uint32_t>(vertices.size()));
+					vertices.push_back(tmpVertex);
+
+				}
+				else {
+					indices.push_back(static_cast<uint32_t>(it->second));
+				}
+
+
 
 				// Store the vertex index in the index buffer
-				indices.push_back(static_cast<uint32_t>(indices.size()));
 			}
 			index_offset += fv;
 

@@ -7,7 +7,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include "vulkan_mem_alloc.h"
-
+#include <functional>
 #include <vector>
 #include <stdexcept>
 
@@ -64,8 +64,52 @@ struct Vertex {
 	glm::vec3 normal;
 	glm::vec4 color;
 	glm::vec2 texCoord;
-	glm::uint32 ID;
-	glm::uint32 materialID;
+	uint32_t ID;
+	uint32_t materialID;
+
+	bool operator==(const Vertex& other) const {
+		return pos == other.pos &&
+			normal == other.normal &&
+			color == other.color &&
+			texCoord == other.texCoord &&
+			ID == other.ID &&
+			materialID == other.materialID;
+	}
+};
+
+// Custom hash function for Vertex
+struct VertexHash {
+	std::size_t operator()(const Vertex& vertex) const {
+		std::size_t seed = 0;
+
+		// Hash combine function
+		auto hashCombine = [&seed](auto& val) {
+			std::hash<std::decay_t<decltype(val)>> hasher;
+			seed ^= hasher(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			};
+
+		// Hash each member of the Vertex struct
+		hashCombine(vertex.pos.x);
+		hashCombine(vertex.pos.y);
+		hashCombine(vertex.pos.z);
+
+		hashCombine(vertex.normal.x);
+		hashCombine(vertex.normal.y);
+		hashCombine(vertex.normal.z);
+
+		hashCombine(vertex.color.r);
+		hashCombine(vertex.color.g);
+		hashCombine(vertex.color.b);
+		hashCombine(vertex.color.a);
+
+		hashCombine(vertex.texCoord.x);
+		hashCombine(vertex.texCoord.y);
+
+		hashCombine(vertex.ID);
+		hashCombine(vertex.materialID);
+
+		return seed;
+	}
 };
 
 struct CharInfo {

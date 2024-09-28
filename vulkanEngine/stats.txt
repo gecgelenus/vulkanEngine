@@ -12,12 +12,12 @@
   }, 
   "Total": {
     "BlockCount": 10, 
-    "BlockBytes": 1426423808, 
+    "BlockBytes": 129835140, 
     "AllocationCount": 35, 
-    "AllocationBytes": 1389902336, 
+    "AllocationBytes": 93313668, 
     "UnusedRangeCount": 2, 
     "AllocationSizeMin": 128, 
-    "AllocationSizeMax": 524288000, 
+    "AllocationSizeMax": 67108864, 
     "UnusedRangeSizeMin": 2967040, 
     "UnusedRangeSizeMax": 33554432
   }, 
@@ -27,28 +27,28 @@
       "Size": 8374976512, 
       "Budget": {
         "BudgetBytes": 7569670144, 
-        "UsageBytes": 1613885440
+        "UsageBytes": 319442944
       }, 
       "Stats": {
         "BlockCount": 8, 
-        "BlockBytes": 1389363200, 
+        "BlockBytes": 92774532, 
         "AllocationCount": 8, 
-        "AllocationBytes": 1389363200, 
+        "AllocationBytes": 92774532, 
         "UnusedRangeCount": 0, 
-        "AllocationSizeMin": 1048576, 
-        "AllocationSizeMax": 524288000
+        "AllocationSizeMin": 23040, 
+        "AllocationSizeMax": 67108864
       }, 
       "MemoryPools": {
         "Type 1": {
           "Flags": ["DEVICE_LOCAL"], 
           "Stats": {
             "BlockCount": 8, 
-            "BlockBytes": 1389363200, 
+            "BlockBytes": 92774532, 
             "AllocationCount": 8, 
-            "AllocationBytes": 1389363200, 
+            "AllocationBytes": 92774532, 
             "UnusedRangeCount": 0, 
-            "AllocationSizeMin": 1048576, 
-            "AllocationSizeMax": 524288000
+            "AllocationSizeMin": 23040, 
+            "AllocationSizeMax": 67108864
           }
         }, 
         "Type 2": {
@@ -114,8 +114,8 @@
       "Flags": ["DEVICE_LOCAL"], 
       "Size": 224395264, 
       "Budget": {
-        "BudgetBytes": 213463040, 
-        "UsageBytes": 10932224
+        "BudgetBytes": 213659648, 
+        "UsageBytes": 10735616
       }, 
       "Stats": {
         "BlockCount": 1, 
@@ -157,11 +157,11 @@
       "DedicatedAllocations": [
         {"Type": "IMAGE_OPTIMAL", "Size": 67108864, "Usage": 6}, 
         {"Type": "IMAGE_OPTIMAL", "Size": 1048576, "Usage": 6}, 
-        {"Type": "BUFFER", "Size": 524288000, "Usage": 130}, 
-        {"Type": "BUFFER", "Size": 104857600, "Usage": 66}, 
-        {"Type": "BUFFER", "Size": 524288000, "Usage": 130}, 
-        {"Type": "BUFFER", "Size": 104857600, "Usage": 66}, 
-        {"Type": "BUFFER", "Size": 52428800, "Usage": 130}, 
+        {"Type": "BUFFER", "Size": 2722000, "Usage": 130}, 
+        {"Type": "BUFFER", "Size": 837924, "Usage": 66}, 
+        {"Type": "BUFFER", "Size": 62608, "Usage": 130}, 
+        {"Type": "BUFFER", "Size": 23040, "Usage": 66}, 
+        {"Type": "BUFFER", "Size": 10485760, "Usage": 130}, 
         {"Type": "BUFFER", "Size": 10485760, "Usage": 66}
       ]
     }, 
@@ -241,6 +241,9 @@
       ]
     }
   }, 
+  "CustomPools": {
+  }
+} }, 
   "CustomPools": {
   }
 }          {"Offset": 538880, "Type": "BUFFER", "Size": 128, "Usage": 16}, 

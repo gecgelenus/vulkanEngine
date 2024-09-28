@@ -33,8 +33,8 @@ public:
 
 	void createCommandPool();
 	void createCommandBuffers();
-	void createVertexBuffer();
-	void createIndexBuffer();
+	void createVertexBuffer(uint32_t bufferSize);
+	void createIndexBuffer(uint32_t bufferSize);
 	void createUniformBuffers();
 	void addTexture(Texture* texture);
 
@@ -131,6 +131,11 @@ public:
 	MaterialBufferObject mbo;
 
 protected:
+	void addObjectSingle(Object*);
+
+	void updateGpuBuffers();
+	uint32_t vertexBufferSize;
+	uint32_t indexBufferSize;
 
 	VmaAllocation vertexBufferAllocation;
 	VmaAllocation indexBufferAllocation;
