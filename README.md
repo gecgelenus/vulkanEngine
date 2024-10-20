@@ -23,5 +23,5 @@ deep knowledge and research, so I will count them as feature as well :^)
 - Physics engine
 - Things I couldn't imagine right now
 
-I am working to implements what it is not capable of, but priority goes to TODO list, you can check on root folder.
+I am working to implement things what it is not capable of, but priority goes to TODO list, you can check on root folder.
 Also some parts of codes might obsolete, don't take it serious. It is constantly changing.  
