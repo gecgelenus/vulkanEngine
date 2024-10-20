@@ -758,6 +758,12 @@ void RenderQueue::showCameraSettings()
 		if (ImGui::SliderFloat("Far Plane", &farPlane, 100.0f, 2000.0f)) {
 			// snapping can be done if needed
 		}
+
+		if (ImGui::Button("Top view")) {
+			this->position = glm::vec3(0.0f, 5.0f, 0.0f);
+			this->verticalAngle = glm::radians(-90.0f);	
+		}
+
 		
 		std::string tmpText = "X position: " + std::to_string(position.x);
 
