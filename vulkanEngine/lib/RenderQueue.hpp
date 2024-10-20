@@ -27,7 +27,7 @@ public:
 	void updateCommandBuffers();
 	
 
-	void drawFrame();
+	VkResult drawFrame();
 	
 	void calculateViewVectors();
 	inline static bool stateUI;
@@ -67,7 +67,7 @@ private:
 	std::vector<RenderBatchText*> batchListText;
 
 	uint32_t currentFrame;
-	const int MAX_FRAMES_IN_FLIGHT = 3;
+	const int MAX_FRAMES_IN_FLIGHT = 4;
 
 	VkCommandBuffer beginSingleTimeCommands();
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);

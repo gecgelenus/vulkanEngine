@@ -63,6 +63,7 @@ RenderQueue::RenderQueue(InstanceVariables& vars)
 	createCommandBuffers();
 	createSyncObjects();
 	glfwSetKeyCallback(instance.window, RenderQueue::processInputs);
+	currentFrame = 0;
 
 }
 
@@ -135,7 +136,7 @@ void RenderQueue::updateCommandBuffers()
 	}
 }
 
-void RenderQueue::drawFrame()
+VkResult RenderQueue::drawFrame()
 {
 
 
@@ -143,7 +144,12 @@ void RenderQueue::drawFrame()
 	vkWaitForFences(instance.device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(instance.device, instance.swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	auto result = vkAcquireNextImageKHR(instance.device, instance.swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+	if(result == VK_ERROR_OUT_OF_DATE_KHR){
+		return result;
+	}
+
 
 	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -194,7 +200,7 @@ void RenderQueue::drawFrame()
 		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 
-
+	return VK_SUCCESS;
 }
 
 void RenderQueue::calculateViewVectors()

@@ -1,8 +1,10 @@
 ﻿
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-
-
+#include <filesystem>
+#include <unistd.h>
+#include <stdio.h>
+#include <linux/limits.h>
 #include <math.h>
 
 
@@ -35,7 +37,16 @@ class MainClass {
 public:
 	void run() {
 		
+		auto path = std::filesystem::current_path(); //getting path
+    	std::filesystem::current_path(path / ".."); //setting path
 
+		char cwd[PATH_MAX];
+		if (getcwd(cwd, sizeof(cwd)) != NULL) {
+			printf("Current working dir: %s\n", cwd);
+		} else {
+			perror("getcwd() error");
+			return;
+		}
 
 		initWindow();
 		initVulkan();
@@ -225,11 +236,29 @@ private:
 
 		
 		while (!glfwWindowShouldClose(window)) {
+			VkResult result = renderQueue.drawFrame();
+			if(result == VK_ERROR_OUT_OF_DATE_KHR){
+			vkDeviceWaitIdle(device);
+			for (auto framebuffer : swapChainFramebuffers) {
+				vkDestroyFramebuffer(device, framebuffer, nullptr);
+			}
 
+			for (auto imageView : swapChainImageViews) {
+				vkDestroyImageView(device, imageView, nullptr);
+			}
 
+			vkDestroySwapchainKHR(device, swapChain, nullptr);
+			
+			createSwapChain();
+			createImageViews();
+			createFramebuffers();
+			renderQueue.instance.swapchain = swapChain;
+			renderQueue.instance.swapchainExtent = swapChainExtent;
+			renderQueue.instance.swapchainFramebuffers = swapChainFramebuffers;
+			std::cout << "Swapchain recreated" << std::endl;
+			
+			}
 
-
-			renderQueue.drawFrame();
 			glfwPollEvents();
 		}
 

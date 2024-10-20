@@ -3,7 +3,7 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++-12 build active file",
-            "command": "/usr/bin/g++-12",
+            "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",  // Enables debugging information
@@ -15,10 +15,10 @@
                 "-lvulkan",  // Links the Vulkan library
                 "-lglfw",  // Links the GLFW library
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${workspaceFolder}/vulkanEngine/${fileBasenameNoExtension}"
             ],
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "/home/talha/Documents/engine/vulkanEngine/vulkanEngine"
             },
             "problemMatcher": [
                 "$gcc"

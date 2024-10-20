@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+       {
+          "name": "(gdb) Launch",
+          "type": "cppdbg",
+          "request": "launch",
+          "program": "/home/talha/Documents/engine/vulkanEngine/vulkanEngine/vulkanEngine", // Path to the compiled binary
+          "args": [],
+          "stopAtEntry": false,
+          "cwd": "/home/talha/Documents/engine/vulkanEngine/vulkanEngine", // Set this to the correct folder
+          "environment": [],
+          "externalConsole": true,
+          "MIMode": "gdb",
+          "setupCommands": [
+             {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+             }
+          ],
+          "preLaunchTask": "build",
+          "miDebuggerPath": "/usr/bin/gdb", // Or path to your gdb
+          "miDebuggerArgs": "",
+          "logging": {
+             "moduleLoad": false
+          }
+       }
+    ]
+ }

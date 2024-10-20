@@ -7,6 +7,8 @@
 
 RenderBatch::RenderBatch()
 {
+
+	this->ubo = {};
 }
 
 RenderBatch::RenderBatch(std::string& name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath)
