@@ -94,6 +94,7 @@ private:
 		vars.HEIGHT = HEIGHT;
 		vars.allocator = allocator;
 
+		RenderQueue renderQueue(vars);
 		
 
 		
@@ -111,129 +112,20 @@ private:
 		std::cout << "Number of Characters: " << font.chars.size() << "\n";
 		std::cout << "Number of Kernings: " << font.kernings.size() << "\n";
 
-
-		std::string texturePathBag = "Scene_-_Root_baseColor.jpeg";
-		std::string texturePathCar1 = "aerial_asphalt_01_diff_2k.jpeg";
-		std::string texturePathCar2 = "aerial_asphalt_01_rough_2k@channels=G.png";
-		std::string texturePathCar3 = "Decals.png";
-		std::string texturePathCar4 = "Frond_1_Mat_Color-Frond_1_Mat_Opacity.png";
-		std::string texturePathCar5 = "Trim_Plane_Ground_BaseColor.png";
-
-
-		
-
-		Texture* bagTexture = new Texture(allocator, device, commandPool, graphicsQueue, texturePathBag, true);
-		
-
-
 		std::string texturePathText = "fonts/sansa_32_0.png";
-
 		Texture* textureText = new Texture(allocator, device, commandPool, graphicsQueue, texturePathText, false);
 
 
-
-		std::string batchName = "well batch";
-
-
-		RenderBatch* batch = new RenderBatch(batchName, vars, "shaders/vert.spv", "shaders/frag.spv");
-		batch->addTexture(bagTexture);
-		
-
-
-
-		batchName = "light batch";
-		RenderBatch* batchLight = new RenderBatch(batchName, vars, "shaders/vertFlat.spv", "shaders/fragFlat.spv");
-
-
-		
-
-
-	
-
-
-		RenderQueue renderQueue(vars);
-
-
-		Light* l1 = new Light("Light 1");
-		l1->position = glm::vec4(5.0, 8.0, 5.0, 1.0);
-		l1->color = glm::vec4(1.0, 1.0, 1.0, 250.0);
-
-		Light* l2 = new Light("Light 2");
-		l2->position = glm::vec4(-5.0, 8.0, -5.0, 1.0);
-		l2->color = glm::vec4(1.0, 0.0, 1.0, 250.0);
-
-		Object* sphere1 = new Object("sphere1", "models/sphere.obj", batch->textureMap);
-		Object* sphere2 = new Object("sphere2", "models/sphere.obj", batch->textureMap);
-		Object* sphere3 = new Object("sphere3", "models/sphere.obj", batch->textureMap);
-		Object* sphere4 = new Object("sphere4", "models/sphere.obj", batch->textureMap);
-		Object* well = new Object("bag", "models/bag.obj", batch->textureMap);
-		//Object* car = new Object("car", "models/car.obj", batch->textureMap);
-
-		well->setColor(glm::vec4(1.0f));
-		well->scale = 0.1f;
-		well->updateMatrix();
-
-		//car->position = glm::vec3(10.0f, 0.0f, 10.0f);
-		
-		
-
-		sphere1->position = l1->position;
-		sphere1->updateMatrix();
-		sphere1->setColor(l1->color);
-		
-		sphere2->position = l2->position;
-		sphere1->updateMatrix();
-		sphere2->setColor(l2->color);
-
-		
-
-		
-		
-		batch->addObject(sphere1);
-		batch->addObject(sphere2);
-		batch->addObject(well);
-		//batch->addObject(car);
-
-		batch->resetBuffers();
-		batch->addLight(l1);
-		batch->addLight(l2);
-		batch->setAmbientLight(glm::vec4(1.0f, 1.0f, 1.0f, 0.2f));
-
-		
-		batchLight->addObject(sphere1);
-		batchLight->addObject(sphere2);
-		batchLight->resetBuffers();
-		batchLight->addLight(l1);
-		batchLight->addLight(l2);
-		batchLight->setAmbientLight(glm::vec4(1.0f, 1.0f, 1.0f, 0.2f));
-
-
-
-
-		batchName = "guiBatch";
-
+		std::string batchName = "guiBatch";
 		RenderBatchText* batchText = new RenderBatchText(batchName, vars, "shaders/vertText.spv", "shaders/fragText.spv");
-	
-	
-		renderQueue.pushToQueue(batch);
-		renderQueue.pushToQueue(batchLight);
-
-
 		renderQueue.pushToQueue(batchText);
 
 		
 		
 
 
+
 		saveStats(allocator);
-
-
-
-
-
-
-		
-
 		
 		while (!glfwWindowShouldClose(window)) {
 			VkResult result = renderQueue.drawFrame();
