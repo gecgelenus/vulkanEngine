@@ -1,6 +1,6 @@
-Verbose listing of devices on system
-Extensive check for supported feature list
-Option to select different GPU types, (Integrated, Discrete or even CPU, just for science)
+Verbose listing of devices on system = Done!
+Extensive check for supported feature list = Done!
+Option to select different GPU types, (Integrated, Discrete or even CPU, just for science) = Done!
 Properly selecting queue types (Individual graphic/compute/trasfer queue, care for resource share!)
 Dynamic memory management of Vertex and Index buffers (suballocation)
 Transforming classes to structures of arrays (I will try to implement Data oriented Design)
