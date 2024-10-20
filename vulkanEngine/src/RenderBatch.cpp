@@ -45,6 +45,45 @@ RenderBatch::RenderBatch(std::string& name, InstanceVariables& vars, const char*
 	createUniformBuffers();
 	createVertexBuffer(0);
 	createIndexBuffer(0);
+	createDrawBuffer();
+}
+
+RenderBatch::RenderBatch(const char *name, InstanceVariables &vars, const char *vertexPath, const char *fragmentPath)
+{
+	this->name = name;
+	this->renderFlag = true;
+	this->vertexBufferSize = 0;
+	this->indexBufferSize = 0;
+
+    this->instance = vars.instance;
+    this->device = vars.device;
+    this->pDevice = vars.physicalDevice;
+    this->graphicsQueue = vars.graphicsQueue;
+    this->presentQueue = vars.presentQueue;
+    this->window = vars.window;
+    this->swapChain = vars.swapchain;
+    this->swapChainFramebuffers = vars.swapchainFramebuffers;
+    this->swapChainExtent = vars.swapchainExtent;
+    this->surface = vars.surface;
+    this->renderPass = vars.renderpass;
+    this->vertexPath = vertexPath;
+    this->fragmentPath = fragmentPath;
+	this->allocator = vars.allocator;
+
+	this->materialCount = 0;
+
+	createCommandPool();
+	createCommandBuffers();
+	createDescriptorPool();
+	createDescriptorSetLayout();
+	allocateDescriptorSets();
+	createTextureSampler();
+	createGraphicsPipeline();
+	createUniformBuffers();
+	createVertexBuffer(0);
+	createIndexBuffer(0);
+	createDrawBuffer();
+
 }
 
 RenderBatch::~RenderBatch()
@@ -54,8 +93,12 @@ RenderBatch::~RenderBatch()
 void RenderBatch::addObject(Object* obj)
 {
 	uint32_t offset = this->vertices.size();
-	
+	uint32_t indexOffset = this->indices.size();
+
+
 	obj->offset = offset;
+	obj->indexOffset = indexOffset;
+
 	obj->materialOffset = this->materialCount;
 	obj->setID(objects.size());
 	obj->setMaterialOffset(); // second update or more result undefined behaivor TODO: fix it
@@ -77,16 +120,15 @@ void RenderBatch::addObject(Object* obj)
 
 
 	this->vertices.insert(this->vertices.end(), obj->vertices.begin(), obj->vertices.end());
+	this->indices.insert(this->indices.end(), obj->indices.begin(), obj->indices.end());
 
-	for (uint32_t i : obj->indices) {
-		this->indices.push_back(i + offset);
-	}
+	
 
 	this->objects.push_back(obj);
 
 	updateGpuBuffers();
 
-
+	addObjectToIndirectCommands(obj);
 	
 	std::cout << "Object is added to render batch: " << obj->name << std::endl;
 }
@@ -363,6 +405,13 @@ void RenderBatch::createIndexBuffer(uint32_t bufferSize)
 		indexBuffer, indexBufferAllocation);
 }
 
+void RenderBatch::createDrawBuffer()
+{
+	createBuffer((VkDeviceSize)(sizeof(VkDrawIndexedIndirectCommand) * 10), VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
+		drawBuffer, drawBufferAllocation);
+}
+
 void RenderBatch::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
@@ -524,6 +573,39 @@ void RenderBatch::addTexture(Texture* texture)
 	textureViews.push_back(texture->getImageView());
 	textureMap.insert(std::pair<std::string, int>(texture->path, texture->textureID));
 	updateTextureDescriptors();
+}
+
+void RenderBatch::addObjectToIndirectCommands(Object *obj)
+{
+
+	VkDrawIndexedIndirectCommand command;
+
+	command.firstIndex = obj->indexOffset;
+	command.indexCount = obj->indices.size();
+	command.instanceCount = 1;
+	command.firstInstance = 0;
+	command.vertexOffset = obj->offset;
+
+	drawCommands.push_back(command);
+
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingBufferAllocation;
+
+	createBuffer((VkDeviceSize)(sizeof(VkDrawIndexedIndirectCommand) * 10), VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
+
+	void* data;
+	vmaMapMemory(allocator, stagingBufferAllocation, &data);
+	memcpy(data, drawCommands.data(), (size_t)(sizeof(VkDrawIndexedIndirectCommand) * drawCommands.size()));
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
+
+
+	copyBuffer(stagingBuffer, drawBuffer, (VkDeviceSize)(sizeof(VkDrawIndexedIndirectCommand) *  drawCommands.size()));
+
+	vmaFreeMemory(allocator, stagingBufferAllocation);
+	
 }
 
 void RenderBatch::createDescriptorPool()
@@ -1037,16 +1119,18 @@ void RenderBatch::resetBuffers()
 
 	for (int i = 0; i < objects.size(); i++) {
 		uint32_t offset = this->vertices.size();
+		uint32_t indexOffset = this->indices.size();
+		
 		objects[i]->offset = offset;
+		objects[i]->indexOffset = indexOffset;
 		objects[i]->setID(i);
 		objects[i]->properties.objectID = i;
 		std::cout << "ID: " << objects[i]->getID() << std::endl;
 
 		this->vertices.insert(this->vertices.end(), objects[i]->vertices.begin(), objects[i]->vertices.end());
+		this->indices.insert(this->indices.end(), objects[i]->indices.begin(), objects[i]->indices.end());
 
-		for (uint32_t i : objects[i]->indices) {
-			this->indices.push_back(i + offset);
-		}
+		
 	}
 
 	updateGpuBuffers();

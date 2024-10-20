@@ -14,6 +14,8 @@ class RenderBatch {
 public:
 	RenderBatch();
 	RenderBatch(std::string& name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
+	RenderBatch(const char* name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
+
 	~RenderBatch();
 
 	void addObject(Object*);
@@ -35,8 +37,10 @@ public:
 	void createCommandBuffers();
 	void createVertexBuffer(uint32_t bufferSize);
 	void createIndexBuffer(uint32_t bufferSize);
+	void createDrawBuffer();
 	void createUniformBuffers();
 	void addTexture(Texture* texture);
+	void addObjectToIndirectCommands(Object* obj);
 
 	void createDescriptorPool();
 	void createDescriptorSetLayout();
@@ -77,6 +81,9 @@ public:
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
 
+	VkBuffer drawBuffer;
+	
+
 	VkExtent2D swapChainExtent;
 
 
@@ -105,7 +112,7 @@ public:
 	VkRenderPass renderPass;
 	VkSampler textureSampler;
 
-
+	
 
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSetLayout descriptorSetLayout;
@@ -122,6 +129,7 @@ public:
 	UniformBufferObject ubo;
 	std::vector<VkImageView> textureViews;
 	std::vector<Texture*> textures;
+	std::vector<VkDrawIndexedIndirectCommand> drawCommands;
 
 	const char* vertexPath;
 	const char* fragmentPath;
@@ -139,6 +147,7 @@ protected:
 
 	VmaAllocation vertexBufferAllocation;
 	VmaAllocation indexBufferAllocation;
+	VmaAllocation drawBufferAllocation;
 
 
 

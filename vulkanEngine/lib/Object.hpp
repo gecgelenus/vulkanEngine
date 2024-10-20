@@ -34,6 +34,7 @@ public:
 	std::unordered_map<std::string, int> textureMap;
 	
 	uint32_t offset;
+	uint32_t indexOffset;
 	uint32_t materialOffset;
 	float scale;
 	float rotationX;

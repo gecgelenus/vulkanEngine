@@ -384,7 +384,8 @@ void RenderQueue::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t in
 
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchList[i]->pipelineLayout, 0, 2, sets, 0, nullptr);
 
-			vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(batchList[i]->indices.size()), 1, 0, 0, 0);
+			//vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(batchList[i]->indices.size()), 1, 0, 0, 0);
+			vkCmdDrawIndexedIndirect(commandBuffer, batchList[i]->drawBuffer, 0, batchList[i]->drawCommands.size(), sizeof(VkDrawIndexedIndirectCommand));
 		}
 	}
 		for (int i = 0; i < batchListText.size(); i++) {

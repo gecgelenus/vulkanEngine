@@ -43,6 +43,40 @@ RenderBatchText::RenderBatchText(std::string& name, InstanceVariables& vars, con
 
 }
 
+RenderBatchText::RenderBatchText(const char *name, InstanceVariables &vars, const char *vertexPath, const char *fragmentPath)
+{
+	this->name = name;
+
+
+	this->instance = vars.instance;
+	this->device = vars.device;
+	this->pDevice = vars.physicalDevice;
+	this->graphicsQueue = vars.graphicsQueue;
+	this->presentQueue = vars.presentQueue;
+	this->window = vars.window;
+	this->swapChain = vars.swapchain;
+	this->swapChainFramebuffers = vars.swapchainFramebuffers;
+	this->swapChainExtent = vars.swapchainExtent;
+	this->surface = vars.surface;
+	this->renderPass = vars.renderpass;
+	this->vertexPath = vertexPath;
+	this->fragmentPath = fragmentPath;
+	this->allocator = vars.allocator;
+	this->vertexBufferSize = STORAGE_MB * 10;
+	this->indexBufferSize = STORAGE_MB * 10;
+
+	createCommandPool();
+	createCommandBuffers();
+	createDescriptorPool();
+	createDescriptorSetLayout();
+	allocateDescriptorSets();
+	createTextureSampler();
+	createGraphicsPipeline();
+	createUniformBuffers();
+	createVertexBuffer(vertexBufferSize);
+	createIndexBuffer(indexBufferSize);
+}
+
 void RenderBatchText::addObject(ObjectText* obj)
 {
 	uint32_t offset = this->vertices.size();

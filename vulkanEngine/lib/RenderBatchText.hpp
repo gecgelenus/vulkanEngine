@@ -9,6 +9,7 @@ class RenderBatchText : public RenderBatch {
 public:
 	RenderBatchText();
 	RenderBatchText(std::string& name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
+	RenderBatchText(const char* name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
 
 	void addObject(ObjectText*);
 	ObjectText* getObject(std::string& name);

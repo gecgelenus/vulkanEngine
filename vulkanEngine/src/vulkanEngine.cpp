@@ -120,11 +120,29 @@ private:
 		RenderBatchText* batchText = new RenderBatchText(batchName, vars, "shaders/vertText.spv", "shaders/fragText.spv");
 		renderQueue.pushToQueue(batchText);
 
-		
-		
+		RenderBatch* batch = new RenderBatch("Test Batch", vars, "shaders/vertFlat.spv", "shaders/fragFlatNonMaterial.spv");
+
+		Object* obj1 = new Object("sphere1","models/sphere.obj", batch->textureMap);
+		Object* obj2 = new Object("sphere2","models/sphere.obj", batch->textureMap);
+
+		obj1->setColor(glm::vec4(1.0f));
+		obj2->setColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+		obj1->position = glm::vec3(1.0f);
+		obj2->position = glm::vec3(3.0f);
+
+		batch->addObject(obj1);
+		batch->addObject(obj2);
 
 
+		Light* light1 = new Light("light1");
+		light1->position = glm::vec4(10.0f, 10.0f, 10.0f, 1.0f);
+		light1->color = glm::vec4(1.0f, 1.0f, 1.0f, 100.0f);
 
+		batch->addLight(light1);
+		batch->resetBuffers();
+
+		renderQueue.pushToQueue(batch);
 		saveStats(allocator);
 		
 		while (!glfwWindowShouldClose(window)) {

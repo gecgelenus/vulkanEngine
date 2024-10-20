@@ -11,14 +11,14 @@
     "memoryTypeCount": 6
   }, 
   "Total": {
-    "BlockCount": 5, 
-    "BlockBytes": 59604992, 
-    "AllocationCount": 7, 
-    "AllocationBytes": 22020608, 
+    "BlockCount": 8, 
+    "BlockBytes": 59690840, 
+    "AllocationCount": 26, 
+    "AllocationBytes": 22465624, 
     "UnusedRangeCount": 2, 
     "AllocationSizeMin": 128, 
     "AllocationSizeMax": 10485760, 
-    "UnusedRangeSizeMin": 4029952, 
+    "UnusedRangeSizeMin": 3670784, 
     "UnusedRangeSizeMax": 33554432
   }, 
   "MemoryInfo": {
@@ -26,28 +26,28 @@
       "Flags": ["DEVICE_LOCAL"], 
       "Size": 8589934592, 
       "Budget": {
-        "BudgetBytes": 7394820096, 
-        "UsageBytes": 203292672
+        "BudgetBytes": 6655836160, 
+        "UsageBytes": 208589888
       }, 
       "Stats": {
-        "BlockCount": 3, 
-        "BlockBytes": 22020096, 
-        "AllocationCount": 3, 
-        "AllocationBytes": 22020096, 
+        "BlockCount": 6, 
+        "BlockBytes": 22105944, 
+        "AllocationCount": 6, 
+        "AllocationBytes": 22105944, 
         "UnusedRangeCount": 0, 
-        "AllocationSizeMin": 1048576, 
+        "AllocationSizeMin": 200, 
         "AllocationSizeMax": 10485760
       }, 
       "MemoryPools": {
         "Type 1": {
           "Flags": ["DEVICE_LOCAL"], 
           "Stats": {
-            "BlockCount": 3, 
-            "BlockBytes": 22020096, 
-            "AllocationCount": 3, 
-            "AllocationBytes": 22020096, 
+            "BlockCount": 6, 
+            "BlockBytes": 22105944, 
+            "AllocationCount": 6, 
+            "AllocationBytes": 22105944, 
             "UnusedRangeCount": 0, 
-            "AllocationSizeMin": 1048576, 
+            "AllocationSizeMin": 200, 
             "AllocationSizeMax": 10485760
           }
         }, 
@@ -114,17 +114,17 @@
       "Flags": ["DEVICE_LOCAL"], 
       "Size": 257949696, 
       "Budget": {
-        "BudgetBytes": 215154688, 
-        "UsageBytes": 46825472
+        "BudgetBytes": 201850880, 
+        "UsageBytes": 56098816
       }, 
       "Stats": {
         "BlockCount": 1, 
         "BlockBytes": 4030464, 
-        "AllocationCount": 4, 
-        "AllocationBytes": 512, 
+        "AllocationCount": 20, 
+        "AllocationBytes": 359680, 
         "UnusedRangeCount": 1, 
         "AllocationSizeMin": 128, 
-        "AllocationSizeMax": 128
+        "AllocationSizeMax": 64128
       }, 
       "MemoryPools": {
         "Type 5": {
@@ -132,11 +132,11 @@
           "Stats": {
             "BlockCount": 1, 
             "BlockBytes": 4030464, 
-            "AllocationCount": 4, 
-            "AllocationBytes": 512, 
+            "AllocationCount": 20, 
+            "AllocationBytes": 359680, 
             "UnusedRangeCount": 1, 
             "AllocationSizeMin": 128, 
-            "AllocationSizeMax": 128
+            "AllocationSizeMax": 64128
           }
         }
       }
@@ -157,7 +157,10 @@
       "DedicatedAllocations": [
         {"Type": "IMAGE_OPTIMAL", "Size": 1048576, "Usage": 6}, 
         {"Type": "BUFFER", "Size": 10485760, "Usage": 130}, 
-        {"Type": "BUFFER", "Size": 10485760, "Usage": 66}
+        {"Type": "BUFFER", "Size": 10485760, "Usage": 66}, 
+        {"Type": "BUFFER", "Size": 200, "Usage": 258}, 
+        {"Type": "BUFFER", "Size": 62608, "Usage": 130}, 
+        {"Type": "BUFFER", "Size": 23040, "Usage": 66}
       ]
     }, 
     "Type 2": {
@@ -195,17 +198,33 @@
       "PreferredBlockSize": 32243712, 
       "Blocks": {
         "0": {
-          "MapRefCount": 4, 
+          "MapRefCount": 20, 
           "TotalBytes": 4030464, 
-          "UnusedBytes": 4029952, 
-          "Allocations": 4, 
+          "UnusedBytes": 3670784, 
+          "Allocations": 20, 
           "UnusedRanges": 1, 
           "Suballocations": [
             {"Offset": 0, "Type": "BUFFER", "Size": 128, "Usage": 16}, 
             {"Offset": 128, "Type": "BUFFER", "Size": 128, "Usage": 16}, 
             {"Offset": 256, "Type": "BUFFER", "Size": 128, "Usage": 16}, 
             {"Offset": 384, "Type": "BUFFER", "Size": 128, "Usage": 16}, 
-            {"Offset": 512, "Type": "FREE", "Size": 4029952}
+            {"Offset": 512, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
+            {"Offset": 64640, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
+            {"Offset": 128768, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
+            {"Offset": 192896, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
+            {"Offset": 257024, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
+            {"Offset": 273024, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
+            {"Offset": 289024, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
+            {"Offset": 305024, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
+            {"Offset": 321024, "Type": "BUFFER", "Size": 6400, "Usage": 16}, 
+            {"Offset": 327424, "Type": "BUFFER", "Size": 6400, "Usage": 16}, 
+            {"Offset": 333824, "Type": "BUFFER", "Size": 6400, "Usage": 16}, 
+            {"Offset": 340224, "Type": "BUFFER", "Size": 6400, "Usage": 16}, 
+            {"Offset": 346624, "Type": "BUFFER", "Size": 3264, "Usage": 16}, 
+            {"Offset": 349888, "Type": "BUFFER", "Size": 3264, "Usage": 16}, 
+            {"Offset": 353152, "Type": "BUFFER", "Size": 3264, "Usage": 16}, 
+            {"Offset": 356416, "Type": "BUFFER", "Size": 3264, "Usage": 16}, 
+            {"Offset": 359680, "Type": "FREE", "Size": 3670784}
           ]
         }
       }, 
@@ -215,26 +234,7 @@
   }, 
   "CustomPools": {
   }
-}
-            {"Offset": 128256, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
-            {"Offset": 192384, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
-            {"Offset": 256512, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
-            {"Offset": 272512, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
-            {"Offset": 288512, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
-            {"Offset": 304512, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
-            {"Offset": 320512, "Type": "BUFFER", "Size": 6400, "Usage": 16}, 
-            {"Offset": 326912, "Type": "BUFFER", "Size": 6400, "Usage": 16}, 
-            {"Offset": 333312, "Type": "BUFFER", "Size": 6400, "Usage": 16}, 
-            {"Offset": 339712, "Type": "BUFFER", "Size": 6400, "Usage": 16}, 
-            {"Offset": 346112, "Type": "BUFFER", "Size": 3264, "Usage": 16}, 
-            {"Offset": 349376, "Type": "BUFFER", "Size": 3264, "Usage": 16}, 
-            {"Offset": 352640, "Type": "BUFFER", "Size": 3264, "Usage": 16}, 
-            {"Offset": 355904, "Type": "BUFFER", "Size": 3264, "Usage": 16}, 
-            {"Offset": 359168, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
-            {"Offset": 423296, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
-            {"Offset": 487424, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
-            {"Offset": 551552, "Type": "BUFFER", "Size": 64128, "Usage": 16}, 
-            {"Offset": 615680, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
+}et": 615680, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
             {"Offset": 631680, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
             {"Offset": 647680, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
             {"Offset": 663680, "Type": "BUFFER", "Size": 16000, "Usage": 16}, 
