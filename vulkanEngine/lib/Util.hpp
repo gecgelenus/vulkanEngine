@@ -20,6 +20,8 @@
 #define MAX_MATERIAL_COUNT 100
 
 
+#define QUEUE_NOT_FOUND 3131
+
 
 struct InstanceVariables {
 
@@ -28,6 +30,8 @@ struct InstanceVariables {
 	VmaAllocator allocator;
 	VkDevice device;
 	VkQueue graphicsQueue;
+	VkQueue computeQueue;
+	VkQueue transferQueue;
 	VkQueue presentQueue;
 	GLFWwindow* window;
 	VkSwapchainKHR swapchain;

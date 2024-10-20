@@ -22,9 +22,7 @@
 #include <limits>
 #include <algorithm>
 #include <fstream>
-#include "Renderer.hpp"
 #include "RenderQueue.hpp"
-#include "TextRenderer.hpp"
 #include "Texture.hpp"
 
 #include "Font.hpp"
@@ -328,12 +326,53 @@ private:
 		float queuePriority = 1.0f;
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
-		VkDeviceQueueCreateInfo queueCreateInfo{};
-		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queueCreateInfo.queueFamilyIndex = 0;
-		queueCreateInfo.queueCount = 1;
-		queueCreateInfo.pQueuePriorities = &queuePriority;
-		queueCreateInfos.push_back(queueCreateInfo);
+		graphicsQueueIndex = getGraphicsQueueIndex(physicalDevice);
+		computeQueueIndex = getComputeQueueIndex(physicalDevice);
+		transferQueueIndex = getTransferQueueIndex(physicalDevice);
+
+		if(graphicsQueueIndex == QUEUE_NOT_FOUND){
+			std::cout << "Graphics queue not found!" << std::endl;
+		}else{
+			std::cout << "Graphics queue found; " << graphicsQueueIndex << std::endl;
+			// Graphics queue
+			VkDeviceQueueCreateInfo queueCreateInfo{};
+			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueCreateInfo.queueFamilyIndex = graphicsQueueIndex;
+			queueCreateInfo.queueCount = 1;
+			queueCreateInfo.pQueuePriorities = &queuePriority;
+			queueCreateInfos.push_back(queueCreateInfo);
+		}
+
+		if(computeQueueIndex == QUEUE_NOT_FOUND){
+			std::cout << "Compute queue not found!" << std::endl;
+		}else{
+			std::cout << "Compute queue found; " << computeQueueIndex << std::endl;
+			// Compute queue
+			VkDeviceQueueCreateInfo queueCreateInfo{};
+			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueCreateInfo.queueFamilyIndex = computeQueueIndex;
+			queueCreateInfo.queueCount = 1;
+			queueCreateInfo.pQueuePriorities = &queuePriority;
+			queueCreateInfos.push_back(queueCreateInfo);
+		}
+
+		if(transferQueueIndex == QUEUE_NOT_FOUND){
+			std::cout << "Transfer queue not found!" << std::endl;
+		}else{
+			std::cout << "Transfer queue found; " << transferQueueIndex << std::endl;
+			// Transfer queue
+			VkDeviceQueueCreateInfo queueCreateInfo{};
+			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueCreateInfo.queueFamilyIndex = transferQueueIndex;
+			queueCreateInfo.queueCount = 1;
+			queueCreateInfo.pQueuePriorities = &queuePriority;
+			queueCreateInfos.push_back(queueCreateInfo);
+		}
+
+		
+		
+
+		
 
 		VkPhysicalDeviceFeatures deviceFeatures{};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
@@ -386,9 +425,7 @@ private:
 		vkGetPhysicalDeviceFeatures2(physicalDevice, &deviceFeatures2);
 
 
-		if (vulkan12Features.runtimeDescriptorArray) {
-			std::cout << "drawIndirectCount feature is supported!" << std::endl;
-		}
+		
 
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -410,8 +447,22 @@ private:
 			throw std::runtime_error("failed to create logical device!");
 		}
 
-		vkGetDeviceQueue(device, 0, 0, &graphicsQueue);
-		vkGetDeviceQueue(device, 0, 0, &presentQueue);
+
+		if(graphicsQueueIndex != QUEUE_NOT_FOUND){
+			vkGetDeviceQueue(device, graphicsQueueIndex, 0, &graphicsQueue);
+			vkGetDeviceQueue(device, graphicsQueueIndex, 0, &presentQueue);
+		}
+
+		if(computeQueueIndex != QUEUE_NOT_FOUND){
+			vkGetDeviceQueue(device, computeQueueIndex, 0, &computeQueue);
+		}
+
+		if(transferQueueIndex != QUEUE_NOT_FOUND){
+			vkGetDeviceQueue(device, transferQueueIndex, 0, &transferQueue);
+		}
+
+
+		
 	}
 
 	void createSwapChain()
@@ -1044,6 +1095,64 @@ private:
 		}
 	}
 
+	uint32_t getComputeQueueIndex(VkPhysicalDevice physicalDevice){
+		uint32_t queueFamilyCount;
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+		std::vector<VkQueueFamilyProperties> families(queueFamilyCount);
+
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, families.data());
+
+		for(int i = 0; i < queueFamilyCount; i++){
+			if((families[i].queueFlags & VK_QUEUE_COMPUTE_BIT) && !(families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)){
+				return i;
+			}
+		}
+		
+
+
+
+		return QUEUE_NOT_FOUND;
+	}
+
+	uint32_t getGraphicsQueueIndex(VkPhysicalDevice physicalDevice){
+		uint32_t queueFamilyCount;
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+		std::vector<VkQueueFamilyProperties> families(queueFamilyCount);
+
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, families.data());
+
+		for(int i = 0; i < queueFamilyCount; i++){
+			if((families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)){
+				return i;
+			}
+		}
+		
+
+
+
+		return QUEUE_NOT_FOUND;
+	}
+
+	uint32_t getTransferQueueIndex(VkPhysicalDevice physicalDevice){
+		uint32_t queueFamilyCount;
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+		std::vector<VkQueueFamilyProperties> families(queueFamilyCount);
+
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, families.data());
+
+		for(int i = 0; i < queueFamilyCount; i++){
+			if(!(families[i].queueFlags & VK_QUEUE_COMPUTE_BIT) && !(families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && (families[i].queueFlags & VK_QUEUE_TRANSFER_BIT)){
+				return i;
+			}
+		}
+		
+
+
+
+		return QUEUE_NOT_FOUND;
+	}
+
+
 	// WINDOW
 	uint32_t WIDTH = 1600;
 	uint32_t HEIGHT = 900;
@@ -1055,7 +1164,10 @@ private:
 	// INSTANCE
 	VkInstance instance;
 
-	uint32_t queueIndex = 0;
+	uint32_t graphicsQueueIndex;
+	uint32_t computeQueueIndex;
+	uint32_t transferQueueIndex;
+
 
 	// DEVICE
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
@@ -1063,6 +1175,11 @@ private:
 
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
+
+	VkQueue computeQueue;
+	VkQueue transferQueue;
+
+	
 
 	VkRenderPass renderPass;
 	VkBool32 multiDrawSupport;
