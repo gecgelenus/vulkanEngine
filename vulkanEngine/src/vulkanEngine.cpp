@@ -335,6 +335,7 @@ private:
 		VkPhysicalDeviceFeatures deviceFeatures{};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 		deviceFeatures.sampleRateShading = VK_TRUE;
+		deviceFeatures.multiDrawIndirect = VK_TRUE;
 		
 
 		VkPhysicalDeviceVulkan12Features vulkan12Features{};
