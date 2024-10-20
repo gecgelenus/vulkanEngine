@@ -7,6 +7,7 @@ deep knowledge and research, so I will count them as feature as well :^)
 # What it is capable of
 - Loading .obj files with their material data( .mtl files)
 - Runtime object adding/removing
+- FPS like controls
 - Memory management done with Vulkan Memory allocator (Although I also implemented my own allocator functions in the past)
 - Per object data tracking and management of Texture Data, Transform Data and Material Data
 - Multiple lighting support (Blinn–Phong) 
