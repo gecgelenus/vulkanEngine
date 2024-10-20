@@ -8,6 +8,11 @@
 #include "Light.hpp"
 #include <unordered_map>
 
+#define MEM_PREALLOCATE_SIZE_VERTEX  67108864 // 64MB
+#define MEM_PREALLOCATE_SIZE_INDEX  33554432 // 32MB
+#define MEM_PREALLOCATE_COUNT_COMMAND 1000 // 1000 indirect draw command 
+
+
 
 class RenderBatch {
 
@@ -16,12 +21,15 @@ public:
 	RenderBatch(std::string& name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
 	RenderBatch(const char* name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
 
+
+
 	~RenderBatch();
 
 	void addObject(Object*);
 	void addLight(Light*);
 
 	void deleteObject(std::string& name);
+	void deleteObject(const char* name);
 	void deleteLight(uint32_t ID);
 
 	Object* getObject(std::string& name);
@@ -40,7 +48,6 @@ public:
 	void createDrawBuffer();
 	void createUniformBuffers();
 	void addTexture(Texture* texture);
-	void addObjectToIndirectCommands(Object* obj);
 
 	void createDescriptorPool();
 	void createDescriptorSetLayout();
@@ -50,6 +57,11 @@ public:
 	void updateLightBuffer(uint32_t targetFrame);
 	void createGraphicsPipeline();
 
+
+	void createVirtualBlock();
+	void uploadObjectData(uint32_t index);
+	
+
 	std::unordered_map<std::string, int> textureMap;
 
 	std::string name;
@@ -57,6 +69,11 @@ public:
 	VkInstance instance;
 	VkDevice device;
 	VkPhysicalDevice pDevice;
+	
+	VmaVirtualBlock virtualBlockVertex;
+	VmaVirtualBlock virtualBlockIndex;
+
+	
 	VmaAllocator allocator;
 
 	VkQueue graphicsQueue;
@@ -139,9 +156,13 @@ public:
 	MaterialBufferObject mbo;
 
 protected:
+
+	void constructorPriv(const char* name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
+
 	void addObjectSingle(Object*);
 
 	void updateGpuBuffers();
+	void updateDrawBuffers();
 	uint32_t vertexBufferSize;
 	uint32_t indexBufferSize;
 
@@ -154,7 +175,7 @@ protected:
 	VmaAllocationInfo createBuffer(VkDeviceSize size, int memoryType, VkBufferUsageFlags usage, VkBuffer& buffer, VmaAllocation& allocation);
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDeviceSize srcOffset, VkDeviceSize dstOffset);
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	static std::vector<char> readFile(const std::string& filename);
 

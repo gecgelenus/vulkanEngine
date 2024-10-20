@@ -32,6 +32,18 @@ public:
 	std::vector<uint32_t> indices;
 	std::vector<Material> materials;
 	std::unordered_map<std::string, int> textureMap;
+
+	
+	VkDeviceSize memoryOffsetVertex;
+	VkDeviceSize memoryOffsetIndex;
+	VmaVirtualAllocation virtualVertexAllocation;
+	VmaVirtualAllocation virtualIndexAllocation;
+
+	VkDrawIndexedIndirectCommand drawCommand {};
+
+	
+
+
 	
 	uint32_t offset;
 	uint32_t indexOffset;

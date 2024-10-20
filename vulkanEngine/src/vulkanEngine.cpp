@@ -135,10 +135,9 @@ private:
 		light1->color = glm::vec4(1.0f, 1.0f, 1.0f, 100.0f);
 
 		batch->addLight(light1);
-		batch->resetBuffers();
-
+		batch->deleteObject("sphere1");
 		renderQueue.pushToQueue(batch);
-		saveStats(allocator);
+		//saveStats(allocator);
 
 		while (!glfwWindowShouldClose(window))
 		{

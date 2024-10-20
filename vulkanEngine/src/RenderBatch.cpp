@@ -13,77 +13,12 @@ RenderBatch::RenderBatch()
 
 RenderBatch::RenderBatch(std::string& name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath)
 {
-	this->name = name;
-	this->renderFlag = true;
-	this->vertexBufferSize = 0;
-	this->indexBufferSize = 0;
-
-    this->instance = vars.instance;
-    this->device = vars.device;
-    this->pDevice = vars.physicalDevice;
-    this->graphicsQueue = vars.graphicsQueue;
-    this->presentQueue = vars.presentQueue;
-    this->window = vars.window;
-    this->swapChain = vars.swapchain;
-    this->swapChainFramebuffers = vars.swapchainFramebuffers;
-    this->swapChainExtent = vars.swapchainExtent;
-    this->surface = vars.surface;
-    this->renderPass = vars.renderpass;
-    this->vertexPath = vertexPath;
-    this->fragmentPath = fragmentPath;
-	this->allocator = vars.allocator;
-
-	this->materialCount = 0;
-
-	createCommandPool();
-	createCommandBuffers();
-	createDescriptorPool();
-	createDescriptorSetLayout();
-	allocateDescriptorSets();
-	createTextureSampler();
-	createGraphicsPipeline();
-	createUniformBuffers();
-	createVertexBuffer(0);
-	createIndexBuffer(0);
-	createDrawBuffer();
+	constructorPriv(name.c_str(), vars, vertexPath, fragmentPath);
 }
 
 RenderBatch::RenderBatch(const char *name, InstanceVariables &vars, const char *vertexPath, const char *fragmentPath)
 {
-	this->name = name;
-	this->renderFlag = true;
-	this->vertexBufferSize = 0;
-	this->indexBufferSize = 0;
-
-    this->instance = vars.instance;
-    this->device = vars.device;
-    this->pDevice = vars.physicalDevice;
-    this->graphicsQueue = vars.graphicsQueue;
-    this->presentQueue = vars.presentQueue;
-    this->window = vars.window;
-    this->swapChain = vars.swapchain;
-    this->swapChainFramebuffers = vars.swapchainFramebuffers;
-    this->swapChainExtent = vars.swapchainExtent;
-    this->surface = vars.surface;
-    this->renderPass = vars.renderpass;
-    this->vertexPath = vertexPath;
-    this->fragmentPath = fragmentPath;
-	this->allocator = vars.allocator;
-
-	this->materialCount = 0;
-
-	createCommandPool();
-	createCommandBuffers();
-	createDescriptorPool();
-	createDescriptorSetLayout();
-	allocateDescriptorSets();
-	createTextureSampler();
-	createGraphicsPipeline();
-	createUniformBuffers();
-	createVertexBuffer(0);
-	createIndexBuffer(0);
-	createDrawBuffer();
-
+	constructorPriv(name, vars, vertexPath, fragmentPath);
 }
 
 RenderBatch::~RenderBatch()
@@ -103,7 +38,6 @@ void RenderBatch::addObject(Object* obj)
 	obj->setID(objects.size());
 	obj->setMaterialOffset(); // second update or more result undefined behaivor TODO: fix it
 	obj->properties.objectID = objects.size();
-	std::cout << "ID: " << obj->getID() << std::endl;
 
 	for (const Material& mtl : obj->materials) {
 		mbo.ambient[materialCount] = glm::vec4(mtl.ambient, 1.0f);
@@ -126,9 +60,34 @@ void RenderBatch::addObject(Object* obj)
 
 	this->objects.push_back(obj);
 
-	updateGpuBuffers();
+	VmaVirtualAllocationCreateInfo allocInfoVertex{};
+	allocInfoVertex.size = obj->vertices.size() * sizeof(Vertex);
 
-	addObjectToIndirectCommands(obj);
+	VkResult res = vmaVirtualAllocate(virtualBlockVertex, &allocInfoVertex, &(obj->virtualVertexAllocation), &(obj->memoryOffsetVertex));
+
+	if(res != VK_SUCCESS){
+		throw std::runtime_error("Hmmm, it seems there is no room left for vertex data. Isn't there something you should handle ??");
+	}
+
+	VmaVirtualAllocationCreateInfo allocInfoIndex{};
+	allocInfoIndex.size = obj->indices.size() * sizeof(uint32_t);
+
+	res = vmaVirtualAllocate(virtualBlockIndex, &allocInfoIndex, &(obj->virtualIndexAllocation), &(obj->memoryOffsetIndex));
+
+	if(res != VK_SUCCESS){
+		throw std::runtime_error("Hmmm, it seems there is no room left for index data. Isn't there something you should handle ??");
+	}
+
+	obj->drawCommand.firstIndex = obj->memoryOffsetIndex / sizeof(uint32_t);
+	obj->drawCommand.indexCount = obj->indices.size();
+	obj->drawCommand.instanceCount = 1;
+	obj->drawCommand.firstInstance = 0;
+	obj->drawCommand.vertexOffset = obj->memoryOffsetVertex / sizeof(Vertex);
+
+	drawCommands.push_back(obj->drawCommand);
+
+	uploadObjectData(obj->getID());
+	updateDrawBuffers();
 	
 	std::cout << "Object is added to render batch: " << obj->name << std::endl;
 }
@@ -142,14 +101,25 @@ void RenderBatch::addLight(Light* light)
 
 void RenderBatch::deleteObject(std::string& name)
 {
+	deleteObject(name.c_str());
+}
+
+void RenderBatch::deleteObject(const char *name)
+{
 	Object* obj = getObject(name);
 
 	objects.erase(objects.begin() + obj->getID());
+	uint32_t objIndex = obj->drawCommand.firstIndex;
+	
+	for(int i = 0; i < drawCommands.size();i++){
+		if(drawCommands[i].firstIndex = objIndex){
+			drawCommands.erase(drawCommands.begin() + i);
+			break;
+		}
+	}
 
-
-	resetBuffers();
-	updateGpuBuffers();
-
+	vmaVirtualFree(virtualBlockVertex, obj->virtualVertexAllocation);
+	vmaVirtualFree(virtualBlockIndex, obj->virtualIndexAllocation);
 }
 
 void RenderBatch::deleteLight(uint32_t ID)
@@ -407,7 +377,7 @@ void RenderBatch::createIndexBuffer(uint32_t bufferSize)
 
 void RenderBatch::createDrawBuffer()
 {
-	createBuffer((VkDeviceSize)(sizeof(VkDrawIndexedIndirectCommand) * 10), VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+	createBuffer((VkDeviceSize)(sizeof(VkDrawIndexedIndirectCommand) * MEM_PREALLOCATE_COUNT_COMMAND), VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
 		drawBuffer, drawBufferAllocation);
 }
@@ -575,38 +545,7 @@ void RenderBatch::addTexture(Texture* texture)
 	updateTextureDescriptors();
 }
 
-void RenderBatch::addObjectToIndirectCommands(Object *obj)
-{
 
-	VkDrawIndexedIndirectCommand command;
-
-	command.firstIndex = obj->indexOffset;
-	command.indexCount = obj->indices.size();
-	command.instanceCount = 1;
-	command.firstInstance = 0;
-	command.vertexOffset = obj->offset;
-
-	drawCommands.push_back(command);
-
-	VkBuffer stagingBuffer;
-	VmaAllocation stagingBufferAllocation;
-
-	createBuffer((VkDeviceSize)(sizeof(VkDrawIndexedIndirectCommand) * 10), VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-		VMA_ALLOCATION_CREATE_MAPPED_BIT,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		stagingBuffer, stagingBufferAllocation);
-
-	void* data;
-	vmaMapMemory(allocator, stagingBufferAllocation, &data);
-	memcpy(data, drawCommands.data(), (size_t)(sizeof(VkDrawIndexedIndirectCommand) * drawCommands.size()));
-	vmaUnmapMemory(allocator, stagingBufferAllocation);
-
-
-	copyBuffer(stagingBuffer, drawBuffer, (VkDeviceSize)(sizeof(VkDrawIndexedIndirectCommand) *  drawCommands.size()));
-
-	vmaFreeMemory(allocator, stagingBufferAllocation);
-	
-}
 
 void RenderBatch::createDescriptorPool()
 {
@@ -1044,6 +983,64 @@ void RenderBatch::createGraphicsPipeline()
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
+void RenderBatch::createVirtualBlock()
+{
+	VmaVirtualBlockCreateInfo vertexInfo = {};
+	vertexInfo.size = MEM_PREALLOCATE_SIZE_VERTEX;
+ 
+	VkResult res = vmaCreateVirtualBlock(&vertexInfo, &virtualBlockVertex);
+
+	VmaVirtualBlockCreateInfo indexInfo = {};
+	indexInfo.size = MEM_PREALLOCATE_SIZE_INDEX;
+ 
+	res = vmaCreateVirtualBlock(&indexInfo, &virtualBlockIndex);
+}
+
+void RenderBatch::uploadObjectData(uint32_t index)
+{
+
+	VkDeviceSize vertexSize = objects[index]->vertices.size() * sizeof(Vertex);
+	VkDeviceSize indexSize = objects[index]->indices.size() * sizeof(uint32_t);
+
+	// VERTEX DATA
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingBufferAllocation;
+
+	createBuffer(vertexSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
+
+	void* data;
+	vmaMapMemory(allocator, stagingBufferAllocation, &data);
+	memcpy(data, objects[index]->vertices.data(), (size_t)vertexSize);
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
+
+	copyBuffer(stagingBuffer, vertexBuffer, vertexSize, 0, objects[index]->memoryOffsetVertex);
+
+	vmaFreeMemory(allocator, stagingBufferAllocation);
+
+
+	// INDEX DATA
+	
+	createBuffer(indexSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
+
+	void* data2;
+	vmaMapMemory(allocator, stagingBufferAllocation, &data2);
+	memcpy(data2, objects[index]->indices.data(), (size_t)indexSize);
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
+
+
+	copyBuffer(stagingBuffer, indexBuffer, indexSize, 0, objects[index]->memoryOffsetIndex);
+
+	vmaFreeMemory(allocator, stagingBufferAllocation);
+
+
+}
+
 VmaAllocationInfo RenderBatch::createBuffer(VkDeviceSize size, int memoryType, VkBufferUsageFlags usage, VkBuffer& buffer, VmaAllocation& allocation)
 {
 	VmaAllocationInfo info;
@@ -1112,6 +1109,42 @@ void RenderBatch::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSiz
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
+void RenderBatch::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDeviceSize srcOffset, VkDeviceSize dstOffset)
+{
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = srcOffset; // Optional
+	copyRegion.dstOffset = dstOffset; // Optional
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(graphicsQueue);
+
+	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
 void RenderBatch::resetBuffers()
 {
 	vertices.clear();
@@ -1136,7 +1169,46 @@ void RenderBatch::resetBuffers()
 	updateGpuBuffers();
 }
 
-void RenderBatch::addObjectSingle(Object* obj)
+void RenderBatch::constructorPriv(const char *name, InstanceVariables &vars, const char *vertexPath, const char *fragmentPath)
+{
+
+	this->name = name;
+	this->renderFlag = true;
+	this->vertexBufferSize = 0;
+	this->indexBufferSize = 0;
+
+    this->instance = vars.instance;
+    this->device = vars.device;
+    this->pDevice = vars.physicalDevice;
+    this->graphicsQueue = vars.graphicsQueue;
+    this->presentQueue = vars.presentQueue;
+    this->window = vars.window;
+    this->swapChain = vars.swapchain;
+    this->swapChainFramebuffers = vars.swapchainFramebuffers;
+    this->swapChainExtent = vars.swapchainExtent;
+    this->surface = vars.surface;
+    this->renderPass = vars.renderpass;
+    this->vertexPath = vertexPath;
+    this->fragmentPath = fragmentPath;
+	this->allocator = vars.allocator;
+
+	this->materialCount = 0;
+
+	createCommandPool();
+	createCommandBuffers();
+	createDescriptorPool();
+	createDescriptorSetLayout();
+	allocateDescriptorSets();
+	createTextureSampler();
+	createGraphicsPipeline();
+	createUniformBuffers();
+	createVertexBuffer(MEM_PREALLOCATE_SIZE_VERTEX);
+	createIndexBuffer(MEM_PREALLOCATE_SIZE_INDEX);
+	createVirtualBlock();
+	createDrawBuffer();
+}
+
+void RenderBatch::addObjectSingle(Object *obj)
 {
 	uint32_t offset = this->vertices.size();
 
@@ -1238,6 +1310,27 @@ void RenderBatch::updateGpuBuffers()
 
 	vmaFreeMemory(allocator, stagingBufferAllocation);
 
+}
+
+void RenderBatch::updateDrawBuffers()
+{
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingBufferAllocation;
+
+	createBuffer((VkDeviceSize)(sizeof(VkDrawIndexedIndirectCommand) * drawCommands.size()), VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
+
+	void* data;
+	vmaMapMemory(allocator, stagingBufferAllocation, &data);
+	memcpy(data, drawCommands.data(), (size_t)(sizeof(VkDrawIndexedIndirectCommand) * drawCommands.size()));
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
+
+
+	copyBuffer(stagingBuffer, drawBuffer, (VkDeviceSize)(sizeof(VkDrawIndexedIndirectCommand) *  drawCommands.size()));
+
+	vmaFreeMemory(allocator, stagingBufferAllocation);
 }
 
 VkShaderModule RenderBatch::createShaderModule(const std::vector<char>& code)

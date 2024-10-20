@@ -109,9 +109,6 @@ void Object::loadOBJ(const char* path)
 
 
 
-
-
-
 	tinyobj::ObjReaderConfig reader_config;
 	reader_config.mtl_search_path = "./models/"; // Path to material files
 
@@ -242,14 +239,10 @@ void Object::loadOBJ(const char* path)
 		}
 
 	}
-	std::cout << this->name << " data size before shrinking vector" << std::endl;
-	std::cout << "Vertices size: " << vertices.size() << " ** Capacity: " << vertices.capacity() << " Size in MB: " << float(vertices.size() * sizeof(Vertex)) / float(STORAGE_MB) << std::endl;
-	std::cout << "Indices size: " << indices.size() << " ** Capacity: " << indices.capacity() << " Size in MB: " << float(indices.size() * sizeof(uint32_t)) / float(STORAGE_MB) << std::endl;
-	
 	vertices.shrink_to_fit();
 	indices.shrink_to_fit();
 
-	std::cout << this->name << " data size after shrinking vector" << std::endl;
+	std::cout << this->name << " data size " << std::endl;
 	std::cout << "Vertices size: " << vertices.size() << " ** Capacity: " << vertices.capacity() << " Size in MB: " << float(vertices.size() * sizeof(Vertex)) / float(STORAGE_MB) << std::endl;
 	std::cout << "Indices size: " << indices.size() << " ** Capacity: " << indices.capacity() << " Size in MB: " << float(indices.size() * sizeof(uint32_t)) / float(STORAGE_MB) << std::endl;
 
