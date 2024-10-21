@@ -850,14 +850,14 @@ void RenderBatch::updateUniformBufferEntity(uint32_t targetFrame, glm::vec3 &pos
 		ubo.model[propertyArray[getComponent(list->comp_model_id, list->map_model_id, e)].objectID] = getComponent(list->comp_model_matrix, list->map_model_matrix, e);
 	}
 
+
 	ubo.view = glm::lookAt(position, position + direction, up);
 
 	ubo.proj = glm::perspective(glm::radians(FOV), WIDTH / (float)HEIGHT, nearPlane, farPlane);
 
 	ubo.proj[1][1] *= -1;
-
+	ubo.model[1] = glm::mat4(5.0f);
 	memcpy(uniformBuffersMapped[targetFrame], &ubo, sizeof(ubo));
-
 	memcpy(objectPropertyBuffersMapped[targetFrame], propertyArray.data(), sizeof(objectProperties) * OBJECT_COUNT);
 
 	memcpy(materialBuffersMapped[targetFrame], &mbo, sizeof(MaterialBufferObject));
@@ -876,6 +876,7 @@ void RenderBatch::updateLightBuffer(uint32_t targetFrame)
 
 
 	memcpy(lightBuffersMapped[targetFrame], &lbo, sizeof(lbo));
+
 }
 
 void RenderBatch::createGraphicsPipeline()

@@ -39,7 +39,7 @@ void main() {
 
     vec3 surfaceNormal = normalize(fragNormal);
     
-    vec3 diffuseLight = vec3(0.1f);
+    vec3 diffuseLight = vec3(0.1f) * fragColor.xyz;
 
     vec3 specularLight = vec3(0.0f);
 

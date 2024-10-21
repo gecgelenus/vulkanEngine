@@ -357,6 +357,16 @@ private:
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pApplicationInfo = &appInfo;
 
+
+		#ifdef ENABLE_HARDWARE_DEBUG
+			VkValidationFeaturesEXT validationFeatures = {};
+			VkValidationFeatureEnableEXT enables[] = { VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT };
+			validationFeatures.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+			validationFeatures.enabledValidationFeatureCount = 1;
+			validationFeatures.pEnabledValidationFeatures = enables;
+			createInfo.pNext = &validationFeatures;
+		#endif
+
 		uint32_t glfwExtensionCount = 0;
 		const char **glfwExtensions;
 
@@ -638,8 +648,10 @@ private:
 		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		dependency.srcAccessMask = 0;
 		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		;
+		
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+		
 
 		VkAttachmentDescription colorAttachment{};
 		colorAttachment.format = swapChainImageFormat;

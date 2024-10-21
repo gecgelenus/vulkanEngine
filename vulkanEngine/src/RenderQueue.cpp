@@ -161,32 +161,34 @@ VkResult RenderQueue::drawFrame()
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
 	VkSwapchainKHR swapChains[] = { instance.swapchain };
 
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = waitSemaphores;
-	submitInfo.pWaitDstStageMask = waitStages;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
-	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = signalSemaphores;
 	
 		if (!stateUI) {
 			calculateViewVectors();
 		}
 		for (RenderBatch* b : batchList) {
 			if (b->renderFlag) {
-				b->updateUniformBufferEntity(imageIndex, position, direction, up, FOV, nearPlane, farPlane);
-				b->updateLightBuffer(imageIndex);
+				b->updateUniformBufferEntity(currentFrame, position, direction, up, FOV, nearPlane, farPlane);
+				b->updateLightBuffer(currentFrame);
 			}
 
 		}
 		for (RenderBatchText* b : batchListText) {
-			b->updateUniformBuffer(imageIndex, position, direction, up);
+			b->updateUniformBuffer(currentFrame, position, direction, up);
 		}
 		vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 		recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
+
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+		
 		if (vkQueueSubmit(instance.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
@@ -374,7 +376,7 @@ void RenderQueue::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t in
 	scissor.extent = instance.swapchainExtent;
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
+	
 
 	for (int i = 0; i < batchList.size(); i++) {
 		if (batchList[i]->renderFlag) {
@@ -392,7 +394,7 @@ void RenderQueue::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t in
 
 			vkCmdBindIndexBuffer(commandBuffer, batchList[i]->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-			VkDescriptorSet sets[] = { batchList[i]->descriptorSets[currentFrame] , batchList[i]->descriptorSetsLight[currentFrame] };
+			VkDescriptorSet sets[] = { batchList[i]->descriptorSets[currentFrame] , batchList[i]->descriptorSetsLight[currentFrame]};
 
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, batchList[i]->pipelineLayout, 0, 2, sets, 0, nullptr);
 
