@@ -43,7 +43,7 @@ void RenderBatch::addObject(Object* obj)
 		mbo.ambient[materialCount] = glm::vec4(mtl.ambient, 1.0f);
 		mbo.diffuse[materialCount] = glm::vec4(mtl.diffuse, mtl.transparency);
 		mbo.specular[materialCount] = glm::vec4(mtl.specular, mtl.shininess);
-		mbo.textureID[materialCount][0] = mtl.textureID;
+		mbo.textureID[materialCount][0] = static_cast<uint32_t>(textureMap.at(mtl.textureName));
 		materialCount++;
 		if (MAX_MATERIAL_COUNT <= materialCount) {
 			std::cout << "MATERIAL LIMIT EXCEEDED!!" << std::endl;

@@ -10,6 +10,7 @@
                 "-std=c++17",  // Specifies the C++ standard version
                 "${workspaceFolder}/vulkanEngine/src/*.cpp",  // Compiles all .cpp files in the src folder
                 "-Wl,--allow-multiple-definition",
+                "-Winline",
                 "-I", "${workspaceFolder}/vulkanEngine/lib",  // Includes the lib folder for header files
                 "-L", "/usr/lib",  // Specifies library path (optional if Vulkan/GLFW are in default locations)
                 "-lvulkan",  // Links the Vulkan library

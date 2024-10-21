@@ -28,11 +28,17 @@
 #include "Font.hpp"
 #include <sstream>
 
+#include "ECS_lib.hpp"
+#include "ObjectReader.hpp"
+
 class MainClass
 {
 public:
 	void run()
 	{
+	
+
+		
 
 		auto path = std::filesystem::current_path(); // getting path
 		std::filesystem::current_path(path / "..");	 // setting path
@@ -73,6 +79,29 @@ private:
 
 		VmaAllocator allocator;
 		vmaCreateAllocator(&allocatorCreateInfo, &allocator);
+
+
+		Entity objEntity = 0;
+		ComponentList list{};
+		addComponent(list.comp_vertices_3f, list.map_vertices_3f, objEntity);
+		setComponent(list.comp_vertices_3f, list.map_vertices_3f, objEntity, NEW_VERTEX_DATA_3F);
+		
+		addComponent(list.comp_indices, list.map_indices, objEntity);
+		setComponent(list.comp_indices, list.map_indices, objEntity, NEW_INDEX_DATA);
+
+		addComponent(list.comp_materials, list.map_materials, objEntity);
+		setComponent(list.comp_materials, list.map_materials, objEntity, NEW_MATERIAL_DATA);
+
+		std::string name = "test12";
+
+		addComponent(list.comp_name, list.map_name, objEntity);
+		setComponent(list.comp_name, list.map_name, objEntity, name);
+
+
+		ObjectReader reader(&list);
+		reader.readDataOBJ(objEntity, "models/sphere.obj");
+
+
 
 		InstanceVariables vars{};
 
@@ -120,6 +149,36 @@ private:
 
 		Object *obj1 = new Object("sphere1", "models/sphere.obj", batch->textureMap);
 		Object *obj2 = new Object("sphere2", "models/sphere.obj", batch->textureMap);
+
+		bool flag = true;
+		std::vector<Vertex>* tmpVertex = getComponent(list.comp_vertices_3f, list.map_vertices_3f, objEntity);
+		std::vector<uint32_t>* tmpIndex= getComponent(list.comp_indices, list.map_indices, objEntity);
+
+		for(int i = 0; i < tmpVertex->size(); i++){
+			if(!(tmpVertex->at(i) == obj1->vertices[i])){
+				flag = false;
+			}
+		}
+
+		if(flag){
+			std::cout << "Vertices are same!" << std::endl;
+		}else{
+			std::cout << "Vertices are different!" << std::endl;
+		}
+
+		flag = true;
+
+		for(int i = 0; i < tmpIndex->size(); i++){
+			if(!(tmpIndex->at(i) == obj1->indices[i])){
+				flag = false;
+			}
+		}
+
+		if(flag){
+			std::cout << "Indices are same!" << std::endl;
+		}else{
+			std::cout << "Indices are not same!" << std::endl;
+		}
 		
 		obj1->setColor(glm::vec4(1.0f));
 		obj2->setColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));

@@ -11,7 +11,8 @@
 #include <vector>
 #include <stdexcept>
 #include <bitset>
-#include <
+#include <iostream>
+#include "boost/unordered/unordered_flat_map.hpp"
 
 #define SCREEN_WIDTH 1600.0f
 #define SCREEN_HEIGHT 900.0f
@@ -45,8 +46,6 @@ struct InstanceVariables {
 	uint32_t minImageCount;
 	uint32_t WIDTH;
 	uint32_t HEIGHT;
-
-
 };
 // Assume you have a Material struct to hold material properties
 struct Material {
@@ -55,6 +54,7 @@ struct Material {
 	glm::vec3 specular;
 	float shininess;
 	float transparency;
+	std::string textureName;
 	int textureID;  // To reference a texture if necessary
 };
 
