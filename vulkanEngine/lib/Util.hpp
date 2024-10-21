@@ -10,6 +10,8 @@
 #include <functional>
 #include <vector>
 #include <stdexcept>
+#include <bitset>
+#include <
 
 #define SCREEN_WIDTH 1600.0f
 #define SCREEN_HEIGHT 900.0f
