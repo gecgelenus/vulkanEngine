@@ -13,6 +13,7 @@
 #include <bitset>
 #include <iostream>
 #include "boost/unordered/unordered_flat_map.hpp"
+#include <queue>
 
 #define SCREEN_WIDTH 1600.0f
 #define SCREEN_HEIGHT 900.0f

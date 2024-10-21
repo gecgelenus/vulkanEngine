@@ -30,6 +30,9 @@
 
 #include "ECS_lib.hpp"
 #include "ObjectReader.hpp"
+#include <boost/foreach.hpp>
+
+
 
 class MainClass
 {
@@ -81,25 +84,56 @@ private:
 		vmaCreateAllocator(&allocatorCreateInfo, &allocator);
 
 
-		Entity objEntity = 0;
-		ComponentList list{};
-		addComponent(list.comp_vertices_3f, list.map_vertices_3f, objEntity);
-		setComponent(list.comp_vertices_3f, list.map_vertices_3f, objEntity, NEW_VERTEX_DATA_3F);
 		
-		addComponent(list.comp_indices, list.map_indices, objEntity);
-		setComponent(list.comp_indices, list.map_indices, objEntity, NEW_INDEX_DATA);
+		ComponentList list{};
+		{
+			for(int i = 0; i < MAX_ENTITY_COUNT; i++){
+				list.entityQueue.push(i);
+			}
 
-		addComponent(list.comp_materials, list.map_materials, objEntity);
-		setComponent(list.comp_materials, list.map_materials, objEntity, NEW_MATERIAL_DATA);
+			// set signature indices
+			list.comp_position_2f.signatureIndex = COMPONENT_POSITION_2F;
+			list.comp_position_3f.signatureIndex = COMPONENT_POSITION_3F;
+			list.comp_color_3f.signatureIndex = COMPONENT_COLOR_3F;
+			list.comp_color_4f.signatureIndex = COMPONENT_COLOR_4F;
+			list.comp_texture_id.signatureIndex = COMPONENT_TEXTURE_ID;
+			list.comp_model_matrix.signatureIndex = COMPONENT_MODEL_MATRIX;
+			list.comp_rotation.signatureIndex = COMPONENT_ROTATION;
+			list.comp_scale.signatureIndex = COMPONENT_SCALE;
+			list.comp_visible.signatureIndex = COMPONENT_VISIBLE;
+			list.comp_name.signatureIndex = COMPONENT_NAME;
+			list.comp_virtual_mem_offset_vertex.signatureIndex = COMPONENT_VIRTUAL_MEMORY_OFFSET_VERTEX;
+			list.comp_virtual_mem_offset_index.signatureIndex = COMPONENT_VIRTUAL_MEMORY_OFFSET_INDEX;
+			list.comp_mem_offset_vertex.signatureIndex = COMPONENT_MEMORY_OFFSET_VERTEX;
+			list.comp_mem_offset_index.signatureIndex = COMPONENT_MEMORY_OFFSET_INDEX;
+			list.comp_virtual_alloc_vertex.signatureIndex = COMPONENT_VIRTUAL_ALLOCATION_VERTEX;
+			list.comp_virtual_alloc_index.signatureIndex = COMPONENT_VIRTUAL_ALLOCATION_INDEX;
+			list.comp_draw_command.signatureIndex = COMPONENT_DRAW_COMMAND;
+			list.comp_object_property.signatureIndex = COMPONENT_OBJECT_PROPERTY;
+			list.comp_vertices_3f.signatureIndex = COMPONENT_VERTEX_DATA_3F;
+			list.comp_vertices_2f.signatureIndex = COMPONENT_VERTEX_DATA_2F;
+			list.comp_indices.signatureIndex = COMPONENT_INDEX_DATA;
+			list.comp_materials.signatureIndex = COMPONENT_MATERIAL_DATA;
+			list.comp_mem_offset_material.signatureIndex = COMPONENT_MEMORY_OFFSET_MATERIAL;
+			list.comp_model_id.signatureIndex = COMPONENT_MODEL_ID;
+		}
+		
 
-		std::string name = "test12";
 
-		addComponent(list.comp_name, list.map_name, objEntity);
-		setComponent(list.comp_name, list.map_name, objEntity, name);
 
+		Entity objEntity = createEntity(&list, OBJECT3D_MASK);
 
 		ObjectReader reader(&list);
 		reader.readDataOBJ(objEntity, "models/sphere.obj");
+
+
+		auto it = list.map_mem_offset_vertex.begin();
+
+		for(it; it != list.map_mem_offset_vertex.end(); ++it){
+			std::cout << it->first << " " << it->second << std::endl;
+		}
+		
+
 
 
 
@@ -145,7 +179,7 @@ private:
 		RenderBatchText *batchText = new RenderBatchText(batchName, vars, "shaders/vertText.spv", "shaders/fragText.spv");
 		renderQueue.pushToQueue(batchText);
 
-		RenderBatch *batch = new RenderBatch("Test Batch", vars, "shaders/vertFlat.spv", "shaders/fragFlatNonMaterial.spv");
+		RenderBatch *batch = new RenderBatch(&list, "Test Batch", vars, "shaders/vertFlat.spv", "shaders/fragFlatNonMaterial.spv");
 
 		Object *obj1 = new Object("sphere1", "models/sphere.obj", batch->textureMap);
 		Object *obj2 = new Object("sphere2", "models/sphere.obj", batch->textureMap);
@@ -186,8 +220,7 @@ private:
 		obj1->position = glm::vec3(0.0f);
 		obj2->position = glm::vec3(3.0f);
 
-		batch->addObject(obj1);
-		batch->addObject(obj2);
+		batch->addObject(objEntity);
 		
 		Light *light1 = new Light("light1");
 		light1->position = glm::vec4(10.0f, 10.0f, 10.0f, 1.0f);

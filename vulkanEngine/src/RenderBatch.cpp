@@ -21,6 +21,18 @@ RenderBatch::RenderBatch(const char *name, InstanceVariables &vars, const char *
 	constructorPriv(name, vars, vertexPath, fragmentPath);
 }
 
+RenderBatch::RenderBatch(ComponentList* list, const char *name, InstanceVariables &vars, const char *vertexPath, const char *fragmentPath)
+{
+	this->list = list;
+	constructorPriv(name, vars, vertexPath, fragmentPath);
+}
+
+RenderBatch::RenderBatch(ComponentList* list, std::string& name, InstanceVariables &vars, const char *vertexPath, const char *fragmentPath)
+{
+	this->list = list;
+	constructorPriv(name.c_str(), vars, vertexPath, fragmentPath);
+}
+
 RenderBatch::~RenderBatch()
 {
 }
@@ -90,6 +102,80 @@ void RenderBatch::addObject(Object* obj)
 	updateDrawBuffers();
 	
 	std::cout << "Object is added to render batch: " << obj->name << std::endl;
+}
+
+void RenderBatch::addObject(Entity e)
+{
+	uint32_t offset = this->vertices.size();
+	uint32_t indexOffset = this->indices.size();
+
+	setComponent(list->comp_mem_offset_vertex, list->map_mem_offset_vertex, e, offset);
+	setComponent(list->comp_mem_offset_index, list->map_mem_offset_index, e, indexOffset);
+	setComponent(list->comp_mem_offset_material, list->map_mem_offset_material, e, this->materialCount);
+	setComponent(list->comp_model_id, list->map_model_id, e, static_cast<uint32_t>(objectsEntity.size()));
+	updateID(e);
+	updateMaterialOffset(e);
+	getComponentP(list->comp_object_property, list->map_object_property, e)->objectID = objectsEntity.size();
+	setColor(e);
+
+	MaterialData matData = getComponent(list->comp_materials, list->map_materials, e);
+	VertexData3F vertData = getComponent(list->comp_vertices_3f, list->map_vertices_3f, e);
+	IndexData idxData = getComponent(list->comp_indices, list->map_indices, e);;
+
+
+	for(int i = 0; i < matData->size(); i++, materialCount++){
+		mbo.ambient[materialCount] = glm::vec4(matData->at(i).ambient, 1.0f);
+		mbo.diffuse[materialCount] = glm::vec4(matData->at(i).diffuse, matData->at(i).transparency);
+		mbo.specular[materialCount] = glm::vec4(matData->at(i).specular, matData->at(i).shininess);
+		mbo.textureID[materialCount][0] = static_cast<uint32_t>(textureMap.at(matData->at(i).textureName));
+		if (MAX_MATERIAL_COUNT <= materialCount) {
+			std::cout << "MATERIAL LIMIT EXCEEDED!!" << std::endl;
+			break;
+		}
+	}
+
+	this->vertices.insert(this->vertices.end(), vertData->begin(), vertData->end());
+	this->indices.insert(this->indices.end(), idxData->begin(), idxData->end());
+
+
+	this->objectsEntity.push_back(e);
+	
+	VmaVirtualAllocationCreateInfo allocInfoVertex{};
+	allocInfoVertex.size = vertData->size() * sizeof(Vertex);
+	VirtualAllocation* virtAllocVertex = getComponentP(list->comp_virtual_alloc_vertex, list->map_virtual_alloc_vertex, e);
+	VirtualAllocation* virtAllocIndex = getComponentP(list->comp_virtual_alloc_index, list->map_virtual_alloc_index, e);
+
+
+	VkResult res = vmaVirtualAllocate(virtualBlockVertex, &allocInfoVertex, virtAllocVertex, getComponentP(list->comp_virtual_mem_offset_vertex,list->map_virtual_mem_offset_vertex, e));
+
+	if(res != VK_SUCCESS){
+		throw std::runtime_error("Hmmm, it seems there is no room left for vertex data. Isn't there something you should handle ??");
+	}
+
+	VmaVirtualAllocationCreateInfo allocInfoIndex{};
+	allocInfoIndex.size = idxData->size() * sizeof(uint32_t);
+
+	res = vmaVirtualAllocate(virtualBlockIndex, &allocInfoIndex, virtAllocIndex, getComponentP(list->comp_virtual_mem_offset_index, list->map_virtual_mem_offset_index, e));
+
+	if(res != VK_SUCCESS){
+		throw std::runtime_error("Hmmm, it seems there is no room left for index data. Isn't there something you should handle ??");
+	}
+
+	DrawCommand* drawCmd = getComponentP(list->comp_draw_command, list->map_draw_command, e);
+
+
+	drawCmd->firstIndex = getComponent(list->comp_virtual_mem_offset_index, list->map_virtual_mem_offset_index, e) / sizeof(uint32_t);
+	drawCmd->indexCount = idxData->size();
+	drawCmd->instanceCount = 1;
+	drawCmd->firstInstance = 0;
+	drawCmd->vertexOffset = getComponent(list->comp_virtual_mem_offset_vertex, list->map_virtual_mem_offset_vertex, e) / sizeof(Vertex);
+
+
+	drawCommands.push_back(*drawCmd);
+
+	uploadEntityData(e);
+	updateDrawBuffers();
+	std::cout << "Object (as Entity) is added to render batch: " << getComponent(list->comp_name, list->map_name, e) << std::endl;
 }
 
 void RenderBatch::addLight(Light* light)
@@ -750,6 +836,35 @@ void RenderBatch::updateUniformBuffer(uint32_t targetFrame, glm::vec3& position,
 
 }
 
+void RenderBatch::updateUniformBufferEntity(uint32_t targetFrame, glm::vec3 &position, glm::vec3 &direction, glm::vec3 &up, float FOV, float nearPlane, float farPlane)
+{
+
+	std::vector<objectProperties> propertyArray(1000);
+	lbo.cameraPos = glm::vec4(position, 1.0f);
+
+	for (Entity e: objectsEntity) {
+		propertyArray[getComponent(list->comp_model_id, list->map_model_id, e)] = getComponent(list->comp_object_property, list->map_object_property, e);
+	}
+
+	for (Entity e: objectsEntity) {
+		ubo.model[propertyArray[getComponent(list->comp_model_id, list->map_model_id, e)].objectID] = getComponent(list->comp_model_matrix, list->map_model_matrix, e);
+	}
+
+	ubo.view = glm::lookAt(position, position + direction, up);
+
+	ubo.proj = glm::perspective(glm::radians(FOV), WIDTH / (float)HEIGHT, nearPlane, farPlane);
+
+	ubo.proj[1][1] *= -1;
+
+	memcpy(uniformBuffersMapped[targetFrame], &ubo, sizeof(ubo));
+
+	memcpy(objectPropertyBuffersMapped[targetFrame], propertyArray.data(), sizeof(objectProperties) * OBJECT_COUNT);
+
+	memcpy(materialBuffersMapped[targetFrame], &mbo, sizeof(MaterialBufferObject));
+}
+
+
+
 void RenderBatch::updateLightBuffer(uint32_t targetFrame)
 {
 	lbo.lightCount = lights.size();
@@ -1039,6 +1154,51 @@ void RenderBatch::uploadObjectData(uint32_t index)
 	vmaFreeMemory(allocator, stagingBufferAllocation);
 
 
+}
+
+void RenderBatch::uploadEntityData(Entity e)
+{
+	VertexData3F vertData = getComponent(list->comp_vertices_3f, list->map_vertices_3f, e);
+	IndexData idxData = getComponent(list->comp_indices, list->map_indices, e);;
+
+	VkDeviceSize vertexSize = vertData->size() * sizeof(Vertex);
+	VkDeviceSize indexSize = idxData->size() * sizeof(uint32_t);
+
+	// VERTEX DATA
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingBufferAllocation;
+
+	createBuffer(vertexSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
+
+	void* data;
+	vmaMapMemory(allocator, stagingBufferAllocation, &data);
+	memcpy(data, vertData->data(), (size_t)vertexSize);
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
+
+	copyBuffer(stagingBuffer, vertexBuffer, vertexSize, 0, getComponent(list->comp_virtual_mem_offset_vertex, list->map_virtual_mem_offset_vertex, e));
+
+	vmaFreeMemory(allocator, stagingBufferAllocation);
+
+
+	// INDEX DATA
+	
+	createBuffer(indexSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+		VMA_ALLOCATION_CREATE_MAPPED_BIT,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		stagingBuffer, stagingBufferAllocation);
+
+	void* data2;
+	vmaMapMemory(allocator, stagingBufferAllocation, &data2);
+	memcpy(data2, idxData->data(), (size_t)indexSize);
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
+
+
+	copyBuffer(stagingBuffer, indexBuffer, indexSize, 0, getComponent(list->comp_virtual_mem_offset_index, list->map_virtual_mem_offset_index, e));
+
+	vmaFreeMemory(allocator, stagingBufferAllocation);
 }
 
 VmaAllocationInfo RenderBatch::createBuffer(VkDeviceSize size, int memoryType, VkBufferUsageFlags usage, VkBuffer& buffer, VmaAllocation& allocation)
@@ -1401,4 +1561,33 @@ void RenderBatch::updateTextureDescriptors()
 void RenderBatch::deleteTexture(Texture* texture)
 {
 	//TODO
+}
+
+void RenderBatch::updateMaterialOffset(Entity e)
+{
+	MemoryOffset matOffset = getComponent(list->comp_mem_offset_material, list->map_mem_offset_material, e);
+	VertexData3F objVertices = getComponent(list->comp_vertices_3f, list->map_vertices_3f, e);
+
+	for (int i = 0; i < objVertices->size(); i++) {
+		(*objVertices)[i].materialID += matOffset;
+	}
+}
+
+void RenderBatch::updateID(Entity e)
+{
+	ID modelID = getComponent(list->comp_model_id, list->map_model_id, e);
+	VertexData3F objVertices = getComponent(list->comp_vertices_3f, list->map_vertices_3f, e);
+
+	for (int i = 0; i < objVertices->size(); i++) {
+		(*objVertices)[i].ID = modelID;
+	}
+}
+
+void RenderBatch::setColor(Entity e)
+{
+	VertexData3F objVertices = getComponent(list->comp_vertices_3f, list->map_vertices_3f, e);
+
+	for (int i = 0; i < objVertices->size(); i++) {
+		(*objVertices)[i].color += glm::vec4(1.0f);
+	}
 }

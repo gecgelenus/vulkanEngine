@@ -150,6 +150,11 @@ VkResult RenderQueue::drawFrame()
 		return result;
 	}
 
+	if(result == VK_SUBOPTIMAL_KHR){
+		std::cout << "suboptimal" << std::endl;
+	}
+	vkResetFences(instance.device, 1, &inFlightFences[currentFrame]);
+
 
 	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -171,7 +176,7 @@ VkResult RenderQueue::drawFrame()
 		}
 		for (RenderBatch* b : batchList) {
 			if (b->renderFlag) {
-				b->updateUniformBuffer(imageIndex, position, direction, up, FOV, nearPlane, farPlane);
+				b->updateUniformBufferEntity(imageIndex, position, direction, up, FOV, nearPlane, farPlane);
 				b->updateLightBuffer(imageIndex);
 			}
 
@@ -179,8 +184,8 @@ VkResult RenderQueue::drawFrame()
 		for (RenderBatchText* b : batchListText) {
 			b->updateUniformBuffer(imageIndex, position, direction, up);
 		}
+		vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 		recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
-		vkResetFences(instance.device, 1, &inFlightFences[currentFrame]);
 
 		if (vkQueueSubmit(instance.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to submit draw command buffer!");
@@ -196,7 +201,14 @@ VkResult RenderQueue::drawFrame()
 		presentInfo.pImageIndices = &imageIndex;
 		presentInfo.pResults = nullptr; // Optional
 
-		vkQueuePresentKHR(instance.presentQueue, &presentInfo);
+		result = vkQueuePresentKHR(instance.presentQueue, &presentInfo);
+		if(result == VK_ERROR_OUT_OF_DATE_KHR){
+			return result;
+		}
+
+		if(result == VK_SUBOPTIMAL_KHR){
+			std::cout << "suboptimal2" << std::endl;
+		}
 		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 

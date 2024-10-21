@@ -7,6 +7,7 @@
 #include "Texture.hpp"
 #include "Light.hpp"
 #include <unordered_map>
+#include "ECS_lib.hpp"
 
 #define MEM_PREALLOCATE_SIZE_VERTEX  67108864 // 64MB
 #define MEM_PREALLOCATE_SIZE_INDEX  33554432 // 32MB
@@ -20,12 +21,15 @@ public:
 	RenderBatch();
 	RenderBatch(std::string& name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
 	RenderBatch(const char* name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
+	RenderBatch(ComponentList* list, std::string& name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
+	RenderBatch(ComponentList* list, const char*  name, InstanceVariables& vars, const char* vertexPath, const char* fragmentPath);
 
 
 
 	~RenderBatch();
 
 	void addObject(Object*);
+	void addObject(Entity e);
 	void addLight(Light*);
 
 	void deleteObject(std::string& name);
@@ -54,12 +58,16 @@ public:
 	void allocateDescriptorSets();
 	void createTextureSampler();
 	void updateUniformBuffer(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up, float FOV, float nearPlane, float farPlane);
+	void updateUniformBufferEntity(uint32_t targetFrame, glm::vec3& position, glm::vec3& direction, glm::vec3& up, float FOV, float nearPlane, float farPlane);
+	
 	void updateLightBuffer(uint32_t targetFrame);
 	void createGraphicsPipeline();
 
 
 	void createVirtualBlock();
 	void uploadObjectData(uint32_t index);
+	void uploadEntityData(Entity e);
+
 	
 
 	std::unordered_map<std::string, int> textureMap;
@@ -152,6 +160,10 @@ public:
 	const char* fragmentPath;
 	void resetBuffers();
 	std::vector<Object*> objects;
+	std::vector<Entity> objectsEntity;
+	ComponentList* list;
+	
+
 	std::vector<Light*> lights;
 	MaterialBufferObject mbo;
 
@@ -183,7 +195,10 @@ protected:
 	void updateTextureDescriptors();
 	void deleteTexture(Texture* texture);
 
-	
+	void updateMaterialOffset(Entity e);
+	void updateID(Entity e);
+	void setColor(Entity e);
+
 
 	uint32_t materialCount;
 
