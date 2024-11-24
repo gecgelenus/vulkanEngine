@@ -15,6 +15,8 @@ deep knowledge and research, so I will count them as feature as well :^)
 - GUI imlemented with ImGUI
 - Vertex data deduplication (I am working on optimized file structure so I can also reduce load times)
 - Support for 2D and 3D rendering
+- GPU driven draw calls (Instancing)
+- ECS system (For object management)
 
 # What it is NOT capable of;
 - Ray tracing (Don't worry, I will. One day...)
