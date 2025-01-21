@@ -124,7 +124,11 @@ private:
 		Entity objEntity = createEntity(&list, OBJECT3D_MASK);
 
 		ObjectReader reader(&list);
-		reader.readDataOBJ(objEntity, "models/sphere.obj");
+		reader.readDataOBJ(objEntity, "models/buildings.obj");
+
+
+		setComponent(list.comp_model_matrix, list.map_model_matrix, objEntity, glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1, 0, 0)));
+		
 
 
 		auto it = list.map_mem_offset_vertex.begin();
@@ -181,7 +185,7 @@ private:
 
 		RenderBatch *batch = new RenderBatch(&list, "Test Batch", vars, "shaders/vertFlat.spv", "shaders/fragFlatNonMaterial.spv");
 
-		Object *obj1 = new Object("sphere1", "models/sphere.obj", batch->textureMap);
+		Object *obj1 = new Object("sphere1", "models/vase_scene.obj", batch->textureMap);
 		Object *obj2 = new Object("sphere2", "models/sphere.obj", batch->textureMap);
 
 		bool flag = true;
@@ -221,6 +225,8 @@ private:
 		obj2->position = glm::vec3(3.0f);
 
 		batch->addObject(objEntity);
+		
+		
 		
 		Light *light1 = new Light("light1");
 		light1->position = glm::vec4(10.0f, 10.0f, 10.0f, 1.0f);
