@@ -284,13 +284,6 @@ static inline void addComponent(ComponentList* list, ComponentArray<T>& array, b
 
 template<typename T>
 static inline void setComponent(ComponentArray<T>& array, boost::unordered_flat_map<uint32_t, uint32_t>& map, Entity e, T component){
-    
-    std::cout << e << std::endl;
-    auto it = map.begin();
-
-    for(it; it != map.end(); ++it){
-        std::cout << it->first << " " << it->second << std::endl;
-    }
 
     array.setComponent(map[e], component);
 }

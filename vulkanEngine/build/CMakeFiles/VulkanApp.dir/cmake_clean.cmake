@@ -15,6 +15,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/VulkanApp.dir/src/RenderBatchText.cpp.o.d"
   "CMakeFiles/VulkanApp.dir/src/RenderQueue.cpp.o"
   "CMakeFiles/VulkanApp.dir/src/RenderQueue.cpp.o.d"
+  "CMakeFiles/VulkanApp.dir/src/Service.cpp.o"
+  "CMakeFiles/VulkanApp.dir/src/Service.cpp.o.d"
   "CMakeFiles/VulkanApp.dir/src/Texture.cpp.o"
   "CMakeFiles/VulkanApp.dir/src/Texture.cpp.o.d"
   "CMakeFiles/VulkanApp.dir/src/imgui.cpp.o"

@@ -405,6 +405,30 @@ src/RenderQueue.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/VulkanApp.dir/build.make CMakeFiles/VulkanApp.dir/src/RenderQueue.cpp.s
 .PHONY : src/RenderQueue.cpp.s
 
+src/Service.o: src/Service.cpp.o
+.PHONY : src/Service.o
+
+# target to build an object file
+src/Service.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VulkanApp.dir/build.make CMakeFiles/VulkanApp.dir/src/Service.cpp.o
+.PHONY : src/Service.cpp.o
+
+src/Service.i: src/Service.cpp.i
+.PHONY : src/Service.i
+
+# target to preprocess a source file
+src/Service.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VulkanApp.dir/build.make CMakeFiles/VulkanApp.dir/src/Service.cpp.i
+.PHONY : src/Service.cpp.i
+
+src/Service.s: src/Service.cpp.s
+.PHONY : src/Service.s
+
+# target to generate assembly for a file
+src/Service.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VulkanApp.dir/build.make CMakeFiles/VulkanApp.dir/src/Service.cpp.s
+.PHONY : src/Service.cpp.s
+
 src/Texture.o: src/Texture.cpp.o
 .PHONY : src/Texture.o
 
@@ -661,6 +685,9 @@ help:
 	@echo "... src/RenderQueue.o"
 	@echo "... src/RenderQueue.i"
 	@echo "... src/RenderQueue.s"
+	@echo "... src/Service.o"
+	@echo "... src/Service.i"
+	@echo "... src/Service.s"
 	@echo "... src/Texture.o"
 	@echo "... src/Texture.i"
 	@echo "... src/Texture.s"

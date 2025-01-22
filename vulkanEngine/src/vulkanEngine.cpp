@@ -31,6 +31,8 @@
 #include "ECS_lib.hpp"
 #include "ObjectReader.hpp"
 #include <boost/foreach.hpp>
+#include <thread>
+#include "Service.hpp"
 
 
 
@@ -83,6 +85,10 @@ private:
 		VmaAllocator allocator;
 		vmaCreateAllocator(&allocatorCreateInfo, &allocator);
 
+		Service service(12345);
+
+		std::thread th(&Service::run, &service);
+
 
 		
 		ComponentList list{};
@@ -124,18 +130,15 @@ private:
 		Entity objEntity = createEntity(&list, OBJECT3D_MASK);
 
 		ObjectReader reader(&list);
-		reader.readDataOBJ(objEntity, "models/buildings.obj");
+		reader.readDataOBJ(objEntity, "models/cezeri.obj");
 
+		std::string entityName = "Buildings";
+		setComponent(list.comp_name, list.map_name, objEntity, entityName);
 
 		setComponent(list.comp_model_matrix, list.map_model_matrix, objEntity, glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1, 0, 0)));
 		
 
 
-		auto it = list.map_mem_offset_vertex.begin();
-
-		for(it; it != list.map_mem_offset_vertex.end(); ++it){
-			std::cout << it->first << " " << it->second << std::endl;
-		}
 		
 
 
@@ -163,21 +166,7 @@ private:
 
 		RenderQueue renderQueue(vars);
 
-		std::ifstream t("textures/fonts/sansa_32.fnt");
-		std::stringstream buffer;
-		buffer << t.rdbuf();
-
-		FontData font;
-		font.parse(buffer.str());
-
-		// Output parsed data
-		std::cout << "Font Face: " << font.face << "\n";
-		std::cout << "Font Size: " << font.size << "\n";
-		std::cout << "Number of Characters: " << font.chars.size() << "\n";
-		std::cout << "Number of Kernings: " << font.kernings.size() << "\n";
-
-		std::string texturePathText = "fonts/sansa_32_0.png";
-		Texture *textureText = new Texture(allocator, device, commandPool, graphicsQueue, texturePathText, false);
+		
 
 		std::string batchName = "guiBatch";
 		RenderBatchText *batchText = new RenderBatchText(batchName, vars, "shaders/vertText.spv", "shaders/fragText.spv");

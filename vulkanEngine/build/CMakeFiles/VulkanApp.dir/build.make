@@ -181,10 +181,24 @@ CMakeFiles/VulkanApp.dir/src/RenderQueue.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/VulkanApp.dir/src/RenderQueue.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/talha/Documents/vulkanEngine/vulkanEngine/src/RenderQueue.cpp -o CMakeFiles/VulkanApp.dir/src/RenderQueue.cpp.s
 
+CMakeFiles/VulkanApp.dir/src/Service.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
+CMakeFiles/VulkanApp.dir/src/Service.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/Service.cpp
+CMakeFiles/VulkanApp.dir/src/Service.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/VulkanApp.dir/src/Service.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/Service.cpp.o -MF CMakeFiles/VulkanApp.dir/src/Service.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/Service.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/Service.cpp
+
+CMakeFiles/VulkanApp.dir/src/Service.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/VulkanApp.dir/src/Service.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/talha/Documents/vulkanEngine/vulkanEngine/src/Service.cpp > CMakeFiles/VulkanApp.dir/src/Service.cpp.i
+
+CMakeFiles/VulkanApp.dir/src/Service.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/VulkanApp.dir/src/Service.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/talha/Documents/vulkanEngine/vulkanEngine/src/Service.cpp -o CMakeFiles/VulkanApp.dir/src/Service.cpp.s
+
 CMakeFiles/VulkanApp.dir/src/Texture.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
 CMakeFiles/VulkanApp.dir/src/Texture.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/Texture.cpp
 CMakeFiles/VulkanApp.dir/src/Texture.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/VulkanApp.dir/src/Texture.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/VulkanApp.dir/src/Texture.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/Texture.cpp.o -MF CMakeFiles/VulkanApp.dir/src/Texture.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/Texture.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/Texture.cpp
 
 CMakeFiles/VulkanApp.dir/src/Texture.cpp.i: cmake_force
@@ -198,7 +212,7 @@ CMakeFiles/VulkanApp.dir/src/Texture.cpp.s: cmake_force
 CMakeFiles/VulkanApp.dir/src/imgui.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
 CMakeFiles/VulkanApp.dir/src/imgui.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui.cpp
 CMakeFiles/VulkanApp.dir/src/imgui.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/imgui.cpp.o -MF CMakeFiles/VulkanApp.dir/src/imgui.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/imgui.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui.cpp
 
 CMakeFiles/VulkanApp.dir/src/imgui.cpp.i: cmake_force
@@ -212,7 +226,7 @@ CMakeFiles/VulkanApp.dir/src/imgui.cpp.s: cmake_force
 CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
 CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_demo.cpp
 CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o -MF CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_demo.cpp
 
 CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.i: cmake_force
@@ -226,7 +240,7 @@ CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.s: cmake_force
 CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
 CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_draw.cpp
 CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.o -MF CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_draw.cpp
 
 CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.i: cmake_force
@@ -240,7 +254,7 @@ CMakeFiles/VulkanApp.dir/src/imgui_draw.cpp.s: cmake_force
 CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
 CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_impl_glfw.cpp
 CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.o -MF CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_impl_glfw.cpp
 
 CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.i: cmake_force
@@ -254,7 +268,7 @@ CMakeFiles/VulkanApp.dir/src/imgui_impl_glfw.cpp.s: cmake_force
 CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
 CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_impl_vulkan.cpp
 CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.o -MF CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_impl_vulkan.cpp
 
 CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.i: cmake_force
@@ -268,7 +282,7 @@ CMakeFiles/VulkanApp.dir/src/imgui_impl_vulkan.cpp.s: cmake_force
 CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
 CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_tables.cpp
 CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.o -MF CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_tables.cpp
 
 CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.i: cmake_force
@@ -282,7 +296,7 @@ CMakeFiles/VulkanApp.dir/src/imgui_tables.cpp.s: cmake_force
 CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
 CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_widgets.cpp
 CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.o -MF CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/imgui_widgets.cpp
 
 CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.i: cmake_force
@@ -296,7 +310,7 @@ CMakeFiles/VulkanApp.dir/src/imgui_widgets.cpp.s: cmake_force
 CMakeFiles/VulkanApp.dir/src/vulkanEngine.cpp.o: CMakeFiles/VulkanApp.dir/flags.make
 CMakeFiles/VulkanApp.dir/src/vulkanEngine.cpp.o: /home/talha/Documents/vulkanEngine/vulkanEngine/src/vulkanEngine.cpp
 CMakeFiles/VulkanApp.dir/src/vulkanEngine.cpp.o: CMakeFiles/VulkanApp.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/VulkanApp.dir/src/vulkanEngine.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/VulkanApp.dir/src/vulkanEngine.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/VulkanApp.dir/src/vulkanEngine.cpp.o -MF CMakeFiles/VulkanApp.dir/src/vulkanEngine.cpp.o.d -o CMakeFiles/VulkanApp.dir/src/vulkanEngine.cpp.o -c /home/talha/Documents/vulkanEngine/vulkanEngine/src/vulkanEngine.cpp
 
 CMakeFiles/VulkanApp.dir/src/vulkanEngine.cpp.i: cmake_force
@@ -317,6 +331,7 @@ VulkanApp_OBJECTS = \
 "CMakeFiles/VulkanApp.dir/src/RenderBatch.cpp.o" \
 "CMakeFiles/VulkanApp.dir/src/RenderBatchText.cpp.o" \
 "CMakeFiles/VulkanApp.dir/src/RenderQueue.cpp.o" \
+"CMakeFiles/VulkanApp.dir/src/Service.cpp.o" \
 "CMakeFiles/VulkanApp.dir/src/Texture.cpp.o" \
 "CMakeFiles/VulkanApp.dir/src/imgui.cpp.o" \
 "CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o" \
@@ -338,6 +353,7 @@ VulkanApp: CMakeFiles/VulkanApp.dir/src/ObjectText.cpp.o
 VulkanApp: CMakeFiles/VulkanApp.dir/src/RenderBatch.cpp.o
 VulkanApp: CMakeFiles/VulkanApp.dir/src/RenderBatchText.cpp.o
 VulkanApp: CMakeFiles/VulkanApp.dir/src/RenderQueue.cpp.o
+VulkanApp: CMakeFiles/VulkanApp.dir/src/Service.cpp.o
 VulkanApp: CMakeFiles/VulkanApp.dir/src/Texture.cpp.o
 VulkanApp: CMakeFiles/VulkanApp.dir/src/imgui.cpp.o
 VulkanApp: CMakeFiles/VulkanApp.dir/src/imgui_demo.cpp.o
@@ -353,7 +369,7 @@ VulkanApp: lib/glfw/src/libglfw3.a
 VulkanApp: /usr/lib/x86_64-linux-gnu/librt.a
 VulkanApp: /usr/lib/x86_64-linux-gnu/libm.so
 VulkanApp: CMakeFiles/VulkanApp.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Linking CXX executable VulkanApp"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/talha/Documents/vulkanEngine/vulkanEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Linking CXX executable VulkanApp"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/VulkanApp.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
